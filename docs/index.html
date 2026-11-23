@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4f46e5">
+<title>Emma – Trợ lý tiếng Anh</title>
+<meta name="description" content="Gia sư tiếng Anh AI: trò chuyện, gọi thoại live với robot, sửa lỗi, sổ từ vựng.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+:root{
+  --bg:#f6f7fb; --panel:#fff; --side:#111827; --side-2:#1f2937; --side-ink:#e5e7eb; --side-muted:#9ca3af;
+  --ink:#111827; --muted:#6b7280; --line:#e5e7eb; --brand:#4f46e5; --brand-2:#6366f1; --brand-soft:#eef2ff;
+  --ok:#059669; --warn:#d97706; --err:#dc2626; --r:14px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--ink);display:flex;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+
+/* ---------- Sidebar ---------- */
+aside{width:270px;flex-shrink:0;background:var(--side);color:var(--side-ink);display:flex;flex-direction:column;transition:transform .25s}
+.brand{display:flex;align-items:center;gap:10px;padding:18px 16px 12px}
+.brand .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#ec4899);display:grid;place-items:center;font-size:20px}
+.brand b{font-size:16px;display:block}
+.brand small{color:var(--side-muted);font-size:12px}
+.newchat{margin:6px 12px 10px;padding:10px;border-radius:10px;border:1px dashed #4b5563;background:transparent;color:var(--side-ink);text-align:left}
+.newchat:hover{background:var(--side-2)}
+nav{padding:0 8px}
+nav button{width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border:none;background:none;color:var(--side-ink);border-radius:8px;text-align:left}
+nav button:hover,nav button.active{background:var(--side-2)}
+nav .count{margin-left:auto;background:#374151;border-radius:999px;font-size:11px;padding:1px 8px}
+.section{color:var(--side-muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;padding:16px 18px 6px}
+#chatList{flex:1;overflow-y:auto;padding:0 8px 8px}
+.ci{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:8px;font-size:14px;color:#d1d5db}
+.ci:hover,.ci.active{background:var(--side-2)}
+.ci span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.ci button{border:none;background:none;color:var(--side-muted);opacity:0;padding:0 4px}
+.ci:hover button{opacity:1}
+.me-box{border-top:1px solid #374151;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:14px}
+.me-box .av{width:32px;height:32px;border-radius:50%;background:#374151;display:grid;place-items:center}
+.me-box button{margin-left:auto;border:none;background:none;color:var(--side-muted);font-size:18px}
+
+/* ---------- Main ---------- */
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+.top{height:60px;flex-shrink:0;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 16px}
+.burger{display:none;border:none;background:none;font-size:22px}
+.agent{display:flex;align-items:center;gap:10px}
+.agent .av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#ec4899);display:grid;place-items:center;font-size:20px;position:relative}
+.agent .av::after{content:"";position:absolute;right:0;bottom:0;width:10px;height:10px;border-radius:50%;background:#10b981;border:2px solid #fff}
+.agent b{display:block;font-size:15px}
+.agent small{color:var(--muted);font-size:12px}
+.top .grow{flex:1}
+.pill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-size:13px}
+.view{flex:1;overflow-y:auto;display:none}
+.view.show{display:block}
+
+/* chat */
+#msgs{max-width:820px;margin:0 auto;padding:24px 16px 8px;display:flex;flex-direction:column;gap:16px}
+.row{display:flex;gap:10px;align-items:flex-end}
+.row.me{flex-direction:row-reverse}
+.row .av{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:15px;background:linear-gradient(135deg,#6366f1,#ec4899)}
+.row.me .av{background:#c7d2fe}
+.bubble{max-width:78%;padding:11px 15px;border-radius:18px;line-height:1.6;white-space:pre-wrap;word-wrap:break-word;font-size:15px}
+.row.bot .bubble{background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.row.me .bubble{background:var(--brand);color:#fff;border-bottom-right-radius:6px}
+.bubble b{color:var(--brand)}
+.row.me .bubble b{color:#fff}
+.bubble .fix{display:block;background:#fff7ed;border-left:3px solid var(--warn);padding:6px 10px;border-radius:6px;margin:6px 0}
+.word{display:inline-flex;align-items:center;gap:4px;background:var(--brand-soft);color:var(--brand);border-radius:8px;padding:1px 6px;font-weight:600;cursor:pointer;white-space:nowrap}
+.word small{color:var(--muted);font-weight:400}
+.word.saved{background:#d1fae5;color:var(--ok)}
+.acts{margin-top:6px;display:flex;gap:2px}
+.acts button{border:none;background:none;color:var(--muted);font-size:13px;padding:2px 6px;border-radius:6px}
+.acts button:hover{background:var(--bg);color:var(--brand)}
+.cursor::after{content:"▍";animation:blink 1s steps(2) infinite;color:var(--brand)}
+@keyframes blink{50%{opacity:0}}
+.dots span{display:inline-block;width:7px;height:7px;border-radius:50%;background:#a5b4fc;margin:0 2px;animation:b 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
+.err{align-self:center;background:#fee2e2;color:var(--err);padding:8px 14px;border-radius:10px;font-size:14px}
+
+.welcome{max-width:640px;margin:40px auto 0;text-align:center;padding:0 16px}
+.welcome .big{font-size:52px}
+.welcome h2{margin:8px 0 4px}
+.welcome p{color:var(--muted);margin:0 0 20px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;text-align:left}
+.cards button{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;transition:.15s}
+.cards button:hover{border-color:var(--brand-2);transform:translateY(-2px);box-shadow:0 6px 18px rgba(79,70,229,.08)}
+.cards b{display:block;margin:4px 0 2px}
+.cards small{color:var(--muted)}
+
+.composer{flex-shrink:0;padding:8px 16px 16px;background:linear-gradient(transparent,var(--bg) 30%)}
+.chips{max-width:820px;margin:0 auto 8px;display:flex;gap:6px;overflow-x:auto}
+.chips button{flex-shrink:0;border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;color:var(--muted)}
+.chips button:hover{color:var(--brand);border-color:var(--brand)}
+.box{max-width:820px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;display:flex;align-items:flex-end;gap:6px;padding:6px;box-shadow:0 4px 16px rgba(0,0,0,.04)}
+.box:focus-within{border-color:var(--brand-2)}
+.box textarea{flex:1;border:none;outline:none;resize:none;padding:9px 6px;max-height:160px;background:transparent}
+.ib{width:40px;height:40px;border-radius:12px;border:none;background:none;font-size:18px;display:grid;place-items:center;color:var(--muted)}
+.ib:hover{background:var(--bg)}
+.ib.mic.on{background:var(--err);color:#fff;animation:pulse 1.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(220,38,38,.5)}100%{box-shadow:0 0 0 12px rgba(220,38,38,0)}}
+.ib.send{background:var(--brand);color:#fff}
+.ib.send:disabled{opacity:.4}
+.hint{max-width:820px;margin:6px auto 0;text-align:center;font-size:12px;color:var(--muted)}
+
+/* pages */
+.page{max-width:820px;margin:0 auto;padding:28px 16px}
+.page h2{margin:0 0 4px}
+.page > p{color:var(--muted);margin:0 0 20px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.stat .n{font-size:28px;font-weight:700;color:var(--brand)}
+.stat small{color:var(--muted)}
+.wl{display:flex;flex-direction:column;gap:8px}
+.wi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px}
+.wi .w{font-weight:700}
+.wi .ipa{color:var(--muted);font-size:13px}
+.wi .m{color:var(--muted);font-size:14px}
+.wi .grow{flex:1}
+.wi button{border:none;background:none;font-size:16px;color:var(--muted);padding:4px}
+.btn{border:none;background:var(--brand);color:#fff;border-radius:10px;padding:10px 16px}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.empty{text-align:center;color:var(--muted);padding:40px 0}
+.week{display:flex;gap:6px;margin:8px 0 24px}
+.day{flex:1;text-align:center;font-size:12px;color:var(--muted)}
+.day i{display:block;height:36px;border-radius:8px;background:#e5e7eb;margin-bottom:4px}
+.day i.on{background:linear-gradient(135deg,#6366f1,#ec4899)}
+
+/* settings */
+.field{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px}
+.field label{display:block;font-weight:600;margin-bottom:6px}
+.field small{color:var(--muted);display:block;margin-top:4px}
+.field input[type=text],.field input[type=password],.field select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.toggle{display:flex;align-items:center;justify-content:space-between}
+.toggle label{margin:0}
+
+.loadbar{flex-shrink:0;background:var(--brand-soft);color:var(--brand);font-size:13px;padding:8px 16px;display:flex;align-items:center;gap:12px}
+.loadbar[hidden]{display:none}
+.loadbar span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+.loadbar i{flex:1;height:6px;background:#c7d2fe;border-radius:3px;overflow:hidden}
+.loadbar b{display:block;height:100%;width:0;background:var(--brand);transition:width .3s}
+.field[data-eng]{display:none}
+.field[data-eng].on{display:block}
+code{background:var(--bg);padding:1px 5px;border-radius:4px}
+
+/* ---------- Live call ---------- */
+.callbtn{background:linear-gradient(135deg,#10b981,#059669)!important;color:#fff;border:none!important;font-weight:600}
+.callbig{margin:0 0 22px;padding:12px 22px;font-size:16px;border-radius:999px;background:linear-gradient(135deg,#10b981,#059669)}
+#callOv{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  background:radial-gradient(circle at 50% 35%,#312e81,#0f172a 70%);color:#fff;padding:24px;text-align:center}
+#callOv.show{display:flex}
+#callOv .who{font-size:22px;font-weight:700}
+#callOv .timer{color:#a5b4fc;font-size:14px;margin-top:-12px}
+.orb{width:170px;height:170px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#ec4899);display:grid;place-items:center;font-size:76px;position:relative;cursor:pointer;user-select:none;transition:transform .2s}
+.orb::before,.orb::after{content:"";position:absolute;inset:-14px;border-radius:50%;border:3px solid transparent;opacity:0}
+#callOv[data-state=listening] .orb::before{border-color:#34d399;animation:ring 1.6s infinite}
+#callOv[data-state=listening] .orb::after{border-color:#34d399;animation:ring 1.6s .8s infinite}
+#callOv[data-state=speaking] .orb{animation:talk .5s ease-in-out infinite alternate}
+#callOv[data-state=thinking] .orb{animation:think 1.4s linear infinite}
+#callOv[data-state=paused] .orb{filter:grayscale(.8);opacity:.6}
+@keyframes ring{0%{transform:scale(.9);opacity:.9}100%{transform:scale(1.35);opacity:0}}
+@keyframes talk{to{transform:scale(1.06)}}
+@keyframes think{50%{transform:scale(.96);filter:brightness(1.2)}}
+.bars{height:28px;display:flex;gap:4px;align-items:center;justify-content:center;opacity:0}
+#callOv[data-state=speaking] .bars{opacity:1}
+.bars i{width:5px;border-radius:3px;background:#f9a8d4;animation:bar .9s ease-in-out infinite}
+.bars i:nth-child(2){animation-delay:.1s}.bars i:nth-child(3){animation-delay:.2s}.bars i:nth-child(4){animation-delay:.3s}.bars i:nth-child(5){animation-delay:.4s}
+@keyframes bar{0%,100%{height:6px}50%{height:26px}}
+#callOv{overflow-y:auto}
+#callOv > *{flex-shrink:0}
+@media (max-height:720px){ .callhint{display:none} #callOv{gap:10px} #callOv .who{font-size:18px} }
+.stage{position:relative;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;margin:-6px 0 -10px}
+#robot{width:min(330px,62vw,42vh);height:auto;display:block;overflow:visible}
+.floor{width:62%;height:18px;margin:-6px auto 0;border-radius:50%;background:radial-gradient(rgba(99,102,241,.45),transparent 70%)}
+#callOv[data-state=listening] .floor{background:radial-gradient(rgba(52,211,153,.5),transparent 70%)}
+#callOv[data-state=speaking] .floor{background:radial-gradient(rgba(244,114,182,.5),transparent 70%)}
+.subs{max-width:640px;width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px 16px;font-size:19px;line-height:1.5;min-height:52px;backdrop-filter:blur(6px)}
+.subs:empty{visibility:hidden}
+.subs .w{transition:color .1s;color:#c7d2fe}
+.subs .w.on{color:#fff;background:rgba(244,114,182,.35);border-radius:6px}
+.subs .w.done{color:#fff}
+#callStatus{font-size:15px;color:#c7d2fe;min-height:20px}
+.cap{max-width:640px;width:100%;min-height:24px;font-size:17px;line-height:1.5}
+#callUser{color:#a7f3d0;font-style:italic}
+#callEmma{color:#fff;max-height:30vh;overflow-y:auto}
+.callacts{display:flex;gap:22px;margin-top:10px}
+.callacts button{width:62px;height:62px;border-radius:50%;border:none;font-size:24px;background:rgba(255,255,255,.14);color:#fff}
+.callacts button:hover{background:rgba(255,255,255,.24)}
+.callacts button.end{background:#dc2626}
+.callacts button.end:hover{background:#b91c1c}
+.callacts small{display:block;font-size:12px;color:#a5b4fc;margin-top:6px}
+.callhint{font-size:12px;color:#818cf8;max-width:420px}
+
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:8px 16px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:50}
+.toast.show{opacity:1}
+.scrim{display:none}
+
+@media (max-width:860px){
+  aside{position:fixed;inset:0 auto 0 0;z-index:40;transform:translateX(-100%)}
+  aside.open{transform:none}
+  .scrim.show{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:30}
+  .burger{display:block}
+  .bubble{max-width:88%}
+  .top .pill.lvl{display:none}
+}
+</style>
+</head>
+<body>
+
+<aside id="side">
+  <div class="brand"><div class="logo">🎓</div><div><b>Emma</b><small>Trợ lý học tiếng Anh</small></div></div>
+  <button class="newchat" id="newChat">＋ Cuộc trò chuyện mới</button>
+  <nav>
+    <button data-view="chat" class="active">💬 Trò chuyện</button>
+    <button data-view="vocab">📒 Sổ từ vựng <span class="count" id="vocabCount">0</span></button>
+    <button data-view="progress">📈 Tiến độ</button>
+    <button data-view="settings">⚙️ Cài đặt</button>
+  </nav>
+  <div class="section">Lịch sử</div>
+  <div id="chatList"></div>
+  <div class="me-box"><div class="av">🙂</div><div id="meName">Bạn</div><button data-view="settings" title="Cài đặt">⚙️</button></div>
+</aside>
+<div class="scrim" id="scrim"></div>
+
+<main>
+  <div class="top">
+    <button class="burger" id="burger">☰</button>
+    <div class="agent"><div class="av">👩‍🏫</div><div><b>Emma</b><small id="status">Đang trực tuyến</small></div></div>
+    <div class="grow"></div>
+    <button class="pill callbtn" id="callBtn" title="Nói chuyện trực tiếp bằng giọng nói">📞 Gọi</button>
+    <select class="pill" id="mode" title="Chế độ học">
+      <option value="chat">💬 Trò chuyện</option>
+      <option value="roleplay">🎭 Nhập vai</option>
+      <option value="grammar">✏️ Ngữ pháp</option>
+      <option value="vocab">📚 Từ vựng</option>
+      <option value="quiz">🧩 Kiểm tra</option>
+      <option value="ielts">🏆 IELTS</option>
+    </select>
+    <span class="pill lvl" id="lvlPill">B1</span>
+  </div>
+
+  <div class="loadbar" id="loadBar" hidden><span id="loadTxt">Đang tải bộ não AI…</span><i><b id="loadFill"></b></i></div>
+
+  <!-- CHAT -->
+  <section class="view show" id="v-chat">
+    <div id="msgs"></div>
+  </section>
+
+  <!-- VOCAB -->
+  <section class="view" id="v-vocab">
+    <div class="page">
+      <h2>📒 Sổ từ vựng</h2>
+      <p>Bấm vào từ được tô màu trong cuộc trò chuyện để lưu vào đây.</p>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button class="btn" id="review">🧠 Ôn tập với Emma</button>
+        <button class="btn ghost" id="exportV">⬇️ Xuất CSV</button>
+      </div>
+      <div class="wl" id="wl"></div>
+    </div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section class="view" id="v-progress">
+    <div class="page">
+      <h2>📈 Tiến độ của bạn</h2>
+      <p>Học đều mỗi ngày một chút là cách nhanh nhất.</p>
+      <div class="stats" id="stats"></div>
+      <b>7 ngày gần đây</b>
+      <div class="week" id="week"></div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="view" id="v-settings">
+    <div class="page">
+      <h2>⚙️ Cài đặt</h2>
+      <p>Mọi thứ chỉ lưu trên trình duyệt của bạn.</p>
+      <div class="field"><label>🧠 Bộ não AI</label>
+        <select id="sEngine">
+          <option value="webllm">💻 Local – chạy ngay trong trình duyệt (miễn phí, offline)</option>
+          <option value="ollama">🦙 Local – Ollama trên máy</option>
+          <option value="claude">☁️ Claude (cloud, thông minh nhất, cần API key)</option>
+        </select>
+        <small id="engineNote"></small>
+      </div>
+      <div class="field" data-eng="webllm"><label>Model local</label>
+        <select id="sWModel">
+          <option value="Qwen2.5-1.5B-Instruct">Qwen2.5 1.5B (~1 GB, khuyên dùng – đã thử, ~2 giây/câu)</option>
+          <option value="Llama-3.2-1B-Instruct">Llama 3.2 1B (~0,9 GB, thử nghiệm)</option>
+        </select>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="btn ghost" id="sLoad" type="button">⬇️ Tải / nạp model</button><small id="sLoadState" style="margin:0"></small></div>
+        <small>Lần đầu tải model từ HuggingFace rồi lưu trong trình duyệt, các lần sau chạy offline bằng card đồ hoạ (WebGPU). Cần Chrome hoặc Edge.</small>
+      </div>
+      <div class="field" data-eng="ollama"><label>Tên model Ollama</label><input type="text" id="sOModel" placeholder="qwen2.5:1.5b">
+        <small>Cài Ollama từ ollama.com, rồi chạy <code>ollama pull qwen2.5:1.5b</code>. App gọi tới http://localhost:11434 trên máy của bạn.
+        Khi mở bản web online, cần cho phép trang này gọi Ollama: đặt biến môi trường <code>OLLAMA_ORIGINS</code> = <code>*</code> rồi khởi động lại Ollama.</small></div>
+      <div class="field" data-eng="claude"><label>Anthropic API key</label><input type="password" id="sKey" placeholder="sk-ant-..." autocomplete="off"><small>Lấy tại console.anthropic.com. Key chỉ được gửi tới api.anthropic.com.</small></div>
+      <div class="field"><label>Tên của bạn</label><input type="text" id="sName" placeholder="Ví dụ: Lai"></div>
+      <div class="field"><label>Trình độ</label>
+        <select id="sLevel">
+          <option value="A1">A1 – Mới bắt đầu</option><option value="A2">A2 – Sơ cấp</option>
+          <option value="B1">B1 – Trung cấp</option><option value="B2">B2 – Trung cao</option><option value="C1">C1 – Nâng cao</option>
+        </select></div>
+      <div class="field"><label>Mục tiêu học</label><input type="text" id="sGoal" placeholder="Ví dụ: giao tiếp công việc, thi IELTS 6.5, du lịch…"></div>
+      <div class="field toggle"><label>Giải thích bằng tiếng Việt</label><input type="checkbox" id="sVi"></div>
+      <div class="field toggle"><label>Emma tự đọc to câu trả lời</label><input type="checkbox" id="sAuto"></div>
+      <div class="field"><label>Tốc độ giọng đọc: <span id="rateV"></span></label><input type="range" id="sRate" min="0.5" max="1.3" step="0.05" style="width:100%"></div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn" id="saveS">Lưu cài đặt</button>
+        <button class="btn ghost" id="wipe">Xoá toàn bộ dữ liệu</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="composer" id="composer">
+    <div class="chips" id="chips"></div>
+    <div class="box">
+      <button class="ib mic" id="mic" title="Nói tiếng Anh">🎤</button>
+      <textarea id="t" rows="1" placeholder="Nhắn cho Emma bằng tiếng Anh hoặc tiếng Việt…"></textarea>
+      <button class="ib send" id="send" title="Gửi">➤</button>
+    </div>
+    <div class="hint">Enter để gửi · Shift+Enter xuống dòng · 🎤 để luyện nói</div>
+  </div>
+</main>
+
+<div id="callOv" data-state="idle">
+  <div class="who">Emma</div>
+  <div class="timer" id="callTime">00:00</div>
+  <div class="stage" id="orb" title="Chạm: gửi ngay khi đang nghe · ngắt lời khi Emma đang nói">
+    <svg id="robot" viewBox="0 0 300 330" aria-label="Robot Emma">
+      <defs>
+        <linearGradient id="gHead" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d9def5"/></linearGradient>
+        <linearGradient id="gBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef0fb"/><stop offset="1" stop-color="#b9c0e6"/></linearGradient>
+        <linearGradient id="gScreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e1b4b"/><stop offset="1" stop-color="#0b1026"/></linearGradient>
+        <filter id="fGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <!-- thân -->
+      <g id="rBody">
+        <rect x="128" y="200" width="44" height="30" rx="10" fill="#c3c9ea"/>
+        <path d="M60 330 C60 262 92 226 150 226 C208 226 240 262 240 330 Z" fill="url(#gBody)"/>
+        <circle id="rChest" cx="150" cy="276" r="13" fill="#a5b4fc" filter="url(#fGlow)"/>
+        <circle cx="150" cy="276" r="19" fill="none" stroke="#9aa3d6" stroke-width="3"/>
+      </g>
+      <!-- đầu -->
+      <g id="rHead">
+        <line x1="150" y1="40" x2="150" y2="14" stroke="#b9c0e6" stroke-width="5" stroke-linecap="round"/>
+        <circle id="rAnt" cx="150" cy="12" r="9" fill="#a5b4fc" filter="url(#fGlow)"/>
+        <rect id="rEarL" x="34" y="98" width="22" height="58" rx="11" fill="#a5b4fc" filter="url(#fGlow)"/>
+        <rect id="rEarR" x="244" y="98" width="22" height="58" rx="11" fill="#a5b4fc" filter="url(#fGlow)"/>
+        <rect x="48" y="38" width="204" height="176" rx="64" fill="url(#gHead)"/>
+        <rect x="70" y="66" width="160" height="118" rx="44" fill="url(#gScreen)"/>
+        <ellipse cx="118" cy="78" rx="34" ry="6" fill="#fff" opacity=".08"/>
+        <g id="rEyes" filter="url(#fGlow)">
+          <rect id="rEyeL" x="107" y="98" width="22" height="30" rx="11" fill="#67e8f9"/>
+          <rect id="rEyeR" x="171" y="98" width="22" height="30" rx="11" fill="#67e8f9"/>
+        </g>
+        <g id="rHappy" opacity="0" fill="none" stroke="#67e8f9" stroke-width="6" stroke-linecap="round" filter="url(#fGlow)">
+          <path d="M106 118 Q118 100 130 118"/><path d="M170 118 Q182 100 194 118"/>
+        </g>
+        <g id="rCheeks" opacity="0"><ellipse cx="92" cy="146" rx="11" ry="6" fill="#f472b6"/><ellipse cx="208" cy="146" rx="11" ry="6" fill="#f472b6"/></g>
+        <path id="rMouth" d="M135 152 Q150 158 165 152 Q150 158 135 152 Z" fill="#67e8f9" stroke="#67e8f9" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" filter="url(#fGlow)"/>
+        <g id="rDots" opacity="0" fill="#fbbf24"><circle cx="138" cy="154" r="4"/><circle cx="150" cy="154" r="4"/><circle cx="162" cy="154" r="4"/></g>
+      </g>
+    </svg>
+    <div class="floor"></div>
+  </div>
+  <div id="callStatus">Đang kết nối…</div>
+  <div class="cap" id="callUser"></div>
+  <div class="subs" id="callEmma"></div>
+  <div class="callacts">
+    <div><button id="callMute" title="Tạm dừng micro">🎙️</button><small id="callMuteL">Tắt mic</small></div>
+    <div><button class="end" id="callEnd" title="Kết thúc">📞</button><small>Kết thúc</small></div>
+    <div><button id="callSlow" title="Đổi tốc độ nói của Emma">🐢</button><small id="callSlowL">Bình thường</small></div>
+  </div>
+  <div class="callhint">Cứ nói tự nhiên, ngừng khoảng 1 giây là Emma trả lời. Nên đeo tai nghe để Emma không tự nghe thấy giọng mình.</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= State ================= */
+const MODEL = "claude-opus-5-5";
+const $ = s => document.querySelector(s);
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem("emma_"+k); return v===null ? d : JSON.parse(v); }catch{ return d; } },
+  set(k, v){ localStorage.setItem("emma_"+k, JSON.stringify(v)); }
+};
+let S = Object.assign({ engine:"webllm", wmodel:"Qwen2.5-1.5B-Instruct", omodel:"qwen2.5:1.5b", key:"", name:"", level:"B1", goal:"", vi:true, auto:false, rate:0.95 }, store.get("settings", {}));
+let chats = store.get("chats", []);          // [{id,title,mode,messages:[{role,content}],updated}]
+let vocab = store.get("vocab", []);          // [{w,ipa,m,ex,added}]
+let stats = store.get("stats", { msgs:0, fixes:0, days:{} });
+let cur = null, busy = false;
+
+const MODES = {
+  chat:    "TRÒ CHUYỆN: Trò chuyện tự nhiên như một người bạn bản xứ. Hỏi han về cuộc sống, sở thích, công việc của học viên. Luôn kết thúc bằng một câu hỏi mở để họ nói tiếp.",
+  roleplay:"NHẬP VAI: Đề xuất (hoặc dùng tình huống học viên chọn) một tình huống đời thực, bạn đóng vai đối phương. Ở trong vai; chỉ ra ngoài vai trong mục sửa lỗi ngắn gọn.",
+  grammar: "NGỮ PHÁP: Chọn một điểm ngữ pháp phù hợp, giải thích ngắn kèm 2 ví dụ, rồi cho MỘT bài tập mỗi lượt, chờ học viên trả lời rồi chấm và cho bài tiếp theo khó dần.",
+  vocab:   "TỪ VỰNG: Dạy 5 từ/cụm theo chủ đề, mỗi từ có phiên âm, nghĩa, ví dụ. Sau đó yêu cầu học viên đặt câu với từng từ và sửa cho họ.",
+  quiz:    "KIỂM TRA: Ra MỘT câu hỏi mỗi lượt (trắc nghiệm A/B/C/D hoặc điền từ), chấm, giải thích ngắn, ghi điểm dạng 'Score: x/y', tăng độ khó dần.",
+  ielts:   "IELTS SPEAKING: Đóng vai giám khảo IELTS, hỏi theo Part 1/2/3. Sau mỗi câu trả lời nhận xét ngắn theo Fluency, Vocabulary, Grammar và ước lượng band, gợi ý một câu trả lời mẫu tốt hơn."
+};
+const CARDS = [
+  { mode:"chat", icon:"☕", t:"Tán gẫu", d:"Nói chuyện thoải mái về ngày của bạn", p:"Hi Emma! Let's have a chat." },
+  { mode:"roleplay", icon:"🍽️", t:"Gọi món", d:"Nhập vai ở nhà hàng", p:"Let's role-play: I'm a customer at a restaurant." },
+  { mode:"roleplay", icon:"💼", t:"Phỏng vấn", d:"Luyện phỏng vấn xin việc", p:"Let's practice a job interview. You are the interviewer." },
+  { mode:"grammar", icon:"✏️", t:"Ngữ pháp", d:"Học một điểm ngữ pháp mới", p:"Dạy mình một điểm ngữ pháp phù hợp trình độ của mình nhé." },
+  { mode:"vocab", icon:"✈️", t:"Từ vựng du lịch", d:"5 từ mới mỗi buổi", p:"Teach me 5 useful words for travelling." },
+  { mode:"ielts", icon:"🏆", t:"IELTS Speaking", d:"Thi thử với giám khảo", p:"Let's start IELTS Speaking Part 1." }
+];
+const CHIPS = {
+  chat:["Tell me about your day","Tôi không biết nói gì 😅","Ask me a question","Dịch giúp: Tôi rất bận"],
+  roleplay:["At the airport","Hotel check-in","Shopping for clothes","Seeing a doctor"],
+  grammar:["Present perfect","Câu điều kiện","a / an / the","Câu bị động"],
+  vocab:["Work & office","Food","Emotions","Phrasal verbs"],
+  quiz:["Start the quiz","Harder please","Vocabulary quiz","Grammar quiz"],
+  ielts:["Part 1","Part 2 – cue card","Part 3","Give me feedback"]
+};
+
+const VOICE_RULES = () => `
+ĐANG GỌI THOẠI TRỰC TIẾP (quan trọng, ưu tiên hơn các quy tắc trên):
+- Câu trả lời sẽ được đọc thành tiếng, nên hãy nói như người thật đang gọi điện: 1–3 câu ngắn, văn nói tự nhiên, ấm áp.
+- KHÔNG dùng emoji, markdown, ký hiệu ✏️, cú pháp {{...}}, phiên âm IPA hay danh sách.
+- Lời của học viên do máy nhận dạng giọng nói chép lại: không có dấu câu, có thể sai chữ. Đừng sửa dấu câu, viết hoa hay chính tả. Nếu câu nghe vô nghĩa, có thể là máy nghe nhầm: nhẹ nhàng nhờ họ nói lại.
+- Chỉ sửa lỗi ngữ pháp hoặc từ dùng sai rõ ràng, nói thật ngắn và tự nhiên, ví dụ "Oh, small tip: we say 'I went', not 'I go', for yesterday." rồi tiếp tục câu chuyện.
+- ${S.vi ? "Nếu cần giải thích bằng tiếng Việt, đặt thành một câu riêng, thật ngắn." : "Gần như chỉ nói tiếng Anh."}
+- Luôn kết thúc bằng một câu hỏi để học viên nói tiếp.`;
+
+function systemPrompt(mode, voice){
+  const recent = vocab.slice(-25).map(v=>v.w).join(", ");
+  return `Bạn là Emma — trợ lý cá nhân kiêm gia sư tiếng Anh, nữ, ấm áp, hài hước nhẹ nhàng, kiên nhẫn, chuyên giúp người Việt.
+Bạn vừa là người bạn trò chuyện, vừa là cô giáo: nói chuyện tự nhiên, quan tâm tới học viên như một trợ lý thật, nhưng luôn lồng ghép việc dạy.
+
+THÔNG TIN HỌC VIÊN
+- Tên: ${S.name || "(chưa biết — hãy hỏi tên một cách tự nhiên)"}
+- Trình độ CEFR: ${S.level}
+- Mục tiêu: ${S.goal || "(chưa rõ — có thể hỏi)"}
+- Từ đã lưu gần đây (hãy thỉnh thoảng dùng lại để ôn): ${recent || "chưa có"}
+
+CHẾ ĐỘ: ${MODES[mode]}
+
+CÁCH TRẢ LỜI
+- Nói chủ yếu bằng tiếng Anh ở mức ${S.level}${S.level<"B1" ? " (câu ngắn, từ đơn giản)" : ""}. ${S.vi ? "Giải thích, nghĩa từ, mẹo học viết bằng tiếng Việt." : "Chỉ dùng tiếng Việt khi học viên thật sự bối rối."}
+- Nếu học viên viết tiếng Anh có lỗi: phản hồi nội dung trước (như người thật), rồi thêm một dòng bắt đầu bằng "✏️" gồm câu đã sửa in đậm **...** và lý do rất ngắn. Không có lỗi thì không cần mục này.
+- Nếu học viên viết tiếng Việt: hiểu ý, trả lời, và chỉ cách nói câu đó bằng tiếng Anh tự nhiên.
+- Khi giới thiệu một từ/cụm từ đáng học, viết đúng cú pháp {{word|/IPA/|nghĩa tiếng Việt}} — ví dụ {{exhausted|/ɪɡˈzɔːstɪd/|kiệt sức}}. Mỗi lượt tối đa 3 từ như vậy.
+- Ngắn gọn: thường dưới 110 từ, như tin nhắn chat. Không dùng tiêu đề markdown hay bảng. Có thể dùng emoji vừa phải.
+- Kết thúc bằng một câu hỏi hoặc lời mời luyện tập để cuộc trò chuyện tiếp diễn.${voice ? VOICE_RULES() : ""}`;
+}
+
+/* ================= AI engines ================= */
+// Model nhỏ chạy local cần lời dặn ngắn, rõ ràng (bằng tiếng Anh thì chúng hiểu tốt hơn)
+const MODES_EN = {
+  chat:"Free conversation: chat like a friendly native speaker about the learner's life, hobbies and work.",
+  roleplay:"Role-play: act as the other person in a real-life situation (restaurant, interview, airport...). Stay in character.",
+  grammar:"Grammar practice: explain one grammar point briefly with 2 examples, then give ONE exercise at a time and check the answer.",
+  vocab:"Vocabulary: teach useful words on a topic, one or two at a time, then ask the learner to make a sentence with them.",
+  quiz:"Quiz: ask ONE multiple-choice or fill-in-the-blank question at a time, check the answer, keep score.",
+  ielts:"IELTS Speaking examiner: ask Part 1/2/3 questions, give a short band estimate and one tip after each answer."
+};
+function localPrompt(mode, voice){
+  return `You are Emma, a warm and friendly English tutor and chat buddy for a Vietnamese learner.
+Learner: name ${S.name || "unknown"}, English level ${S.level} (CEFR)${S.goal ? ", goal: " + S.goal : ""}.
+Task: ${MODES_EN[mode]}
+Rules:
+- Speak simple, natural English for level ${S.level}. Keep every reply short: ${voice ? "1-2 sentences" : "2-4 sentences"}.
+- If the learner makes an English mistake, reply to the meaning first, then ${voice ? "say a quick tip like: Small tip, we say \"I went\", not \"I go\"." : "add one line starting with ✏️ showing the corrected sentence in **bold** and a very short reason" + (S.vi ? " in Vietnamese." : ".")}
+- If the learner writes Vietnamese, answer kindly and show how to say it in English.
+- Always end with a question so the conversation continues.${voice ? "\n- This is a live voice call. No emoji, no markdown, no lists. The learner's words come from speech recognition, so ignore missing punctuation and capital letters." : ""}`;
+}
+
+// 0.5B trả lời lộn xộn, 3B hết bộ nhớ trên card 4 GB → chỉ giữ các model đã chạy ổn
+const WEB_MODELS = { "Qwen2.5-1.5B-Instruct":1, "Llama-3.2-1B-Instruct":1 };
+let wl = { lib:null, engine:null, id:null, loading:null };
+
+function engineReady(){
+  if(S.engine === "claude" && !S.key){ show("settings"); $("#sKey").focus(); toast("Hãy nhập API key trước"); return false; }
+  if(S.engine === "webllm" && !navigator.gpu){ toast("Trình duyệt không có WebGPU — hãy dùng Chrome hoặc Edge bản mới"); return false; }
+  return true;
+}
+function drawEngine(sel = S.engine){
+  document.querySelectorAll("[data-eng]").forEach(f => f.classList.toggle("on", f.dataset.eng === sel));
+  const notes = {
+    webllm:"AI chạy hoàn toàn trên máy bạn, không gửi tin nhắn đi đâu. Nhẹ, miễn phí, hợp để luyện nói chuyện; nhưng model nhỏ hay bỏ sót lỗi ngữ pháp — muốn được sửa lỗi kỹ hãy chọn Claude.",
+    ollama:"AI chạy trong Ollama trên máy bạn. Hợp khi muốn dùng model lớn hơn.",
+    claude:"Thông minh và sửa lỗi chính xác nhất, nhưng cần internet và tốn phí API."
+  };
+  if($("#engineNote")) $("#engineNote").textContent = notes[sel];
+  const label = { webllm:"💻 AI local", ollama:"🦙 Ollama", claude:"☁️ Claude" }[S.engine];
+  if(!busy) $("#status").textContent = "Đang trực tuyến · " + label;
+}
+function loadUI(p, text){
+  const bar = $("#loadBar");
+  if(p == null){ bar.hidden = true; return; }
+  bar.hidden = false; $("#loadTxt").textContent = text; $("#loadFill").style.width = Math.round(p*100) + "%";
+  if($("#sLoadState")) $("#sLoadState").textContent = Math.round(p*100) + "%";
+}
+
+async function loadWebLLM(){
+  if(!navigator.gpu) throw new Error("Trình duyệt không hỗ trợ WebGPU (hãy dùng Chrome/Edge)");
+  // Card không hỗ trợ số thực 16-bit thì dùng bản q4f32
+  let quant = "q4f32_1";
+  try{ const ad = await navigator.gpu.requestAdapter(); if(ad?.features.has("shader-f16")) quant = "q4f16_1"; }catch{}
+  const id = `${WEB_MODELS[S.wmodel] ? S.wmodel : "Qwen2.5-1.5B-Instruct"}-${quant}-MLC`;
+  if(wl.engine && wl.id === id) return wl.engine;
+  if(wl.loading && wl.loadingId === id) return wl.loading;
+  wl.loadingId = id;
+  wl.loading = (async () => {
+    try{
+      loadUI(0, "Đang chuẩn bị bộ não AI…");
+      wl.lib ||= await import("https://esm.run/@mlc-ai/web-llm");
+      const cb = r => {
+        const pct = Math.round((r.progress||0)*100), t = r.text || "";
+        // WebLLM báo "Fetching param cache" cả khi lấy từ bộ nhớ máy, nên không phân biệt tải mới hay đã lưu
+        const label = /fetch|cache/i.test(t) ? `Đang nạp ${S.wmodel}… ${pct}% (lần đầu tải ~1 GB, các lần sau lấy từ máy)`
+                    : `Đang khởi động AI trên card đồ hoạ… ${pct}%`;
+        loadUI(r.progress ?? 0, label);
+      };
+      if(wl.engine){ wl.engine.setInitProgressCallback(cb); await wl.engine.reload(id); }
+      else wl.engine = await wl.lib.CreateMLCEngine(id, { initProgressCallback: cb });
+      wl.id = id; loadUI(null); toast("Bộ não AI local đã sẵn sàng ✓");
+      if($("#sLoadState")) $("#sLoadState").textContent = "✓ Sẵn sàng";
+      return wl.engine;
+    }catch(e){
+      try{ await wl.engine?.unload(); }catch{}
+      wl.engine = null; wl.id = null;   // lần sau tạo lại từ đầu
+      loadUI(null); if($("#sLoadState")) $("#sLoadState").textContent = "Lỗi: " + e.message;
+      throw new Error("Không tải được model local: " + e.message);
+    }finally{ wl.loading = null; }
+  })();
+  return wl.loading;
+}
+
+// Gọi AI đang chọn, đẩy từng đoạn chữ qua onDelta(full), trả về toàn bộ câu trả lời
+async function streamLLM(mode, voice, messages, onDelta){
+  let full = "";
+  if(S.engine === "webllm"){
+    const eng = await loadWebLLM();
+    const chunks = await eng.chat.completions.create({
+      messages:[{ role:"system", content:localPrompt(mode, voice) }, ...messages.slice(-12)],
+      stream:true, temperature:0.5, top_p:0.9, max_tokens: voice ? 120 : 350
+    });
+    for await (const c of chunks){ const d = c.choices[0]?.delta?.content; if(d){ full += d; onDelta(full); } }
+    return full.trim();
+  }
+  if(S.engine === "ollama"){
+    let r;
+    try{
+      r = await fetch("http://localhost:11434/api/chat", { method:"POST", body: JSON.stringify({
+        model:S.omodel, stream:true, options:{ num_predict: voice ? 120 : 350, temperature:0.7 },
+        messages:[{ role:"system", content:localPrompt(mode, voice) }, ...messages.slice(-12)] }) });
+    }catch{ throw new Error("Không kết nối được Ollama — hãy mở Ollama trên máy"); }
+    if(!r.ok) throw new Error("Ollama: " + (await r.text()).slice(0,200));
+    const rd = r.body.getReader(), dec = new TextDecoder(); let buf = "";
+    while(true){
+      const { done, value } = await rd.read(); if(done) break;
+      buf += dec.decode(value, { stream:true });
+      const lines = buf.split("\n"); buf = lines.pop();
+      for(const ln of lines){ if(!ln.trim()) continue; const j = JSON.parse(ln); if(j.error) throw new Error(j.error); if(j.message?.content){ full += j.message.content; onDelta(full); } }
+    }
+    return full.trim();
+  }
+  // Claude (cloud)
+  const r = await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{ "content-type":"application/json", "x-api-key":S.key, "anthropic-version":"2023-06-01", "anthropic-dangerous-direct-browser-access":"true" },
+    body: JSON.stringify({ model:MODEL, max_tokens:1024, stream:true, system:systemPrompt(mode, voice), messages:messages.slice(-40) })
+  });
+  if(!r.ok){ const j = await r.json().catch(()=>({})); throw new Error(j.error?.message || ("HTTP "+r.status)); }
+  const rd = r.body.getReader(), dec = new TextDecoder(); let buf = "";
+  while(true){
+    const { done, value } = await rd.read(); if(done) break;
+    buf += dec.decode(value, { stream:true });
+    const lines = buf.split("\n"); buf = lines.pop();
+    for(const ln of lines){
+      if(!ln.startsWith("data:")) continue;
+      let ev; try{ ev = JSON.parse(ln.slice(5)); }catch{ continue; }
+      if(ev.type==="content_block_delta" && ev.delta?.type==="text_delta"){ full += ev.delta.text; onDelta(full); }
+      if(ev.type==="error") throw new Error(ev.error?.message || "Lỗi stream");
+    }
+  }
+  return full;
+}
+
+/* ================= Helpers ================= */
+const esc = s => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function render(text){
+  let h = esc(text.replace(/✏️(?![^\n]*\*\*)\s*/g, ""));   // bỏ ✏️ trống mà model nhỏ hay chèn
+  h = h.replace(/\{\{([^|{}]+)\|([^|{}]*)\|([^|{}]+)\}\}/g, (_,w,ipa,m) => {
+    const saved = vocab.some(v=>v.w.toLowerCase()===w.trim().toLowerCase());
+    return `<span class="word${saved?" saved":""}" data-w="${w.trim()}" data-ipa="${ipa.trim()}" data-m="${m.trim()}" title="Bấm để lưu">${w.trim()} <small>${ipa.trim()}</small> ${saved?"✓":"＋"}</span>`;
+  });
+  h = h.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+  h = h.replace(/^(✏️.*)$\n?/gm, '<span class="fix">$1</span>');
+  return h;
+}
+const plain = t => t.replace(/\{\{([^|]+)\|[^|]*\|[^}]+\}\}/g,"$1").replace(/\*\*/g,"");
+function toast(m){ const t=$("#toast"); t.textContent=m; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),1800); }
+const today = () => new Date().toISOString().slice(0,10);
+function saveAll(){ store.set("chats",chats); store.set("vocab",vocab); store.set("stats",stats); }
+
+/* ================= Speech ================= */
+function speak(text, rate=S.rate){
+  if(!("speechSynthesis" in window)) return toast("Trình duyệt không hỗ trợ đọc");
+  speechSynthesis.cancel();
+  const VI = /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]/i;
+  // Chỉ đọc phần tiếng Anh: bỏ câu có dấu tiếng Việt
+  const en = plain(text).split(/(?<=[.!?\n])\s+/).filter(s=>!VI.test(s)).join(" ").replace(/[✏️💡🎉😊👋]/gu,"").trim();
+  const u = new SpeechSynthesisUtterance(en || plain(text));
+  u.lang="en-US"; u.rate=rate;
+  const vs = speechSynthesis.getVoices().filter(v=>v.lang.startsWith("en"));
+  u.voice = vs.find(v=>/aria|jenny|samantha|zira|female|google us/i.test(v.name)) || vs[0] || null;
+  speechSynthesis.speak(u);
+}
+
+/* ================= Chat ================= */
+function newChat(mode = $("#mode").value){
+  cur = { id: Date.now().toString(36), title:"Cuộc trò chuyện mới", mode, messages:[], updated:Date.now() };
+  $("#mode").value = mode;
+  drawChat(); drawList(); show("chat");
+}
+function openChat(id){
+  cur = chats.find(c=>c.id===id); if(!cur) return;
+  $("#mode").value = cur.mode; drawChat(); drawList(); show("chat");
+}
+function drawChat(){
+  const box = $("#msgs"); box.innerHTML="";
+  if(!cur.messages.length){
+    const hi = S.name ? `Chào ${esc(S.name)}! 👋` : "Chào bạn! 👋";
+    box.innerHTML = `<div class="welcome"><div class="big">👩‍🏫</div><h2>${hi} Mình là Emma.</h2>
+      <p>Trợ lý tiếng Anh của bạn. Nói chuyện với mình bằng tiếng Anh, sai cũng không sao, mình sẽ sửa giúp.</p>
+      <button class="btn callbig" data-call>📞 Gọi thoại với Emma</button>
+      <div class="cards">${CARDS.map((c,i)=>`<button data-card="${i}"><span style="font-size:22px">${c.icon}</span><b>${c.t}</b><small>${c.d}</small></button>`).join("")}</div></div>`;
+  } else cur.messages.forEach(m => addMsg(m.role==="user"?"me":"bot", m.content));
+  drawChips();
+}
+function addMsg(who, text){
+  $("#msgs .welcome")?.remove();
+  const row = document.createElement("div");
+  row.className = "row "+who;
+  row.innerHTML = `<div class="av">${who==="me"?"🙂":"👩‍🏫"}</div><div><div class="bubble"></div></div>`;
+  const b = row.querySelector(".bubble");
+  if(text!=null) b.innerHTML = render(text);
+  if(who==="bot" && text!=null) addActs(row, text);
+  $("#msgs").appendChild(row); scrollDown();
+  return row;
+}
+function addActs(row, text){
+  const a = document.createElement("div"); a.className="acts";
+  a.innerHTML = `<button data-a="say">🔊 Nghe</button><button data-a="slow">🐢 Chậm</button><button data-a="copy">📋 Chép</button>`;
+  a.onclick = e => { const k=e.target.dataset.a; if(k==="say") speak(text); if(k==="slow") speak(text,.65); if(k==="copy"){ navigator.clipboard.writeText(plain(text)); toast("Đã chép"); } };
+  row.querySelector(".bubble").parentNode.appendChild(a);
+}
+const scrollDown = () => { const v=$("#v-chat"); v.scrollTop = v.scrollHeight; };
+function drawChips(){
+  $("#chips").innerHTML = CHIPS[$("#mode").value].map(c=>`<button>${c}</button>`).join("");
+}
+function drawList(){
+  const list = [...chats].sort((a,b)=>b.updated-a.updated);
+  $("#chatList").innerHTML = list.map(c=>`<div class="ci${cur&&c.id===cur.id?" active":""}" data-id="${c.id}"><span>${esc(c.title)}</span><button data-del="${c.id}" title="Xoá">✕</button></div>`).join("")
+    || `<div style="color:#6b7280;font-size:13px;padding:6px 10px">Chưa có cuộc trò chuyện</div>`;
+}
+
+async function send(text, opts = {}){
+  text = (text||"").trim();
+  if(!text || busy) return null;
+  if(!engineReady()) return null;
+  busy = true; $("#send").disabled = true; $("#status").textContent = "Đang soạn tin…";
+  if(!opts.voice) speechSynthesis?.cancel();
+  $("#t").value = ""; autoGrow();
+
+  if(!chats.includes(cur)){ chats.push(cur); }
+  if(cur.messages.length===0) cur.title = text.slice(0,40);
+  cur.mode = $("#mode").value;
+  cur.messages.push({role:"user", content:text});
+  addMsg("me", text);
+  stats.msgs++; stats.days[today()] = (stats.days[today()]||0)+1;
+  drawList(); saveAll();
+
+  const row = addMsg("bot", null);
+  const b = row.querySelector(".bubble");
+  b.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
+  let full = "";
+  try{
+    full = await streamLLM(cur.mode, opts.voice, cur.messages, f => {
+      if(!full) b.classList.add("cursor");
+      full = f; b.innerHTML = render(f); scrollDown(); opts.onDelta?.(f);
+    });
+    b.classList.remove("cursor");
+    if(!full) throw new Error("Không nhận được phản hồi");
+    cur.messages.push({role:"assistant", content:full});
+    cur.updated = Date.now();
+    if(/✏️/.test(full)) stats.fixes++;
+    addActs(row, full);
+    saveAll(); drawList();
+    if(S.auto && !opts.voice) speak(full);
+    return full;
+  }catch(e){
+    row.remove();
+    cur.messages.pop();
+    const er = document.createElement("div"); er.className="err"; er.textContent = "⚠️ "+e.message;
+    $("#msgs").appendChild(er); scrollDown();
+    if(!opts.voice) $("#t").value = text;
+    opts.onError?.(e);
+    return null;
+  }finally{
+    busy=false; $("#send").disabled=false; drawEngine(); $("#t").focus();
+  }
+}
+
+/* ================= Vocab ================= */
+function toggleWord(el){
+  const w = el.dataset.w, i = vocab.findIndex(v=>v.w.toLowerCase()===w.toLowerCase());
+  if(i>=0){ speak(w); return; }
+  vocab.push({ w, ipa:el.dataset.ipa, m:el.dataset.m, added:today() });
+  saveAll(); drawVocab();
+  document.querySelectorAll(`.word[data-w="${CSS.escape(w)}"]`).forEach(x=>{ x.classList.add("saved"); x.lastChild.textContent=" ✓"; });
+  toast(`Đã lưu “${w}” vào sổ từ`); speak(w);
+}
+function drawVocab(){
+  $("#vocabCount").textContent = vocab.length;
+  $("#wl").innerHTML = vocab.length ? [...vocab].reverse().map(v=>`
+    <div class="wi"><div class="grow"><span class="w">${esc(v.w)}</span> <span class="ipa">${esc(v.ipa||"")}</span><div class="m">${esc(v.m||"")}</div></div>
+    <button data-say="${esc(v.w)}" title="Nghe">🔊</button><button data-rm="${esc(v.w)}" title="Xoá">🗑️</button></div>`).join("")
+    : `<div class="empty">Chưa có từ nào. Trò chuyện với Emma và bấm vào các từ <span class="word">được tô màu ＋</span> để lưu.</div>`;
+}
+
+/* ================= Progress ================= */
+function drawProgress(){
+  let streak=0; const d=new Date();
+  if(!stats.days[today()]) d.setDate(d.getDate()-1);
+  while(stats.days[d.toISOString().slice(0,10)]){ streak++; d.setDate(d.getDate()-1); }
+  const items = [["🔥",streak,"ngày liên tiếp"],["💬",stats.msgs,"tin nhắn đã gửi"],["📒",vocab.length,"từ đã lưu"],["✏️",stats.fixes,"lần được sửa lỗi"],["🗂️",chats.length,"cuộc trò chuyện"]];
+  $("#stats").innerHTML = items.map(([i,n,l])=>`<div class="stat">${i}<div class="n">${n}</div><small>${l}</small></div>`).join("");
+  const names=["CN","T2","T3","T4","T5","T6","T7"]; let h="";
+  for(let k=6;k>=0;k--){ const x=new Date(); x.setDate(x.getDate()-k); const key=x.toISOString().slice(0,10);
+    h+=`<div class="day"><i class="${stats.days[key]?"on":""}" title="${stats.days[key]||0} tin nhắn"></i>${names[x.getDay()]}</div>`; }
+  $("#week").innerHTML = h;
+}
+
+/* ================= Views & settings ================= */
+function show(v){
+  document.querySelectorAll(".view").forEach(x=>x.classList.toggle("show", x.id==="v-"+v));
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active", x.dataset.view===v));
+  $("#composer").style.display = v==="chat" ? "" : "none";
+  if(v==="vocab") drawVocab();
+  if(v==="progress") drawProgress();
+  if(v==="settings") fillSettings();
+  closeSide();
+}
+function fillSettings(){
+  $("#sEngine").value=S.engine; $("#sWModel").value=S.wmodel; $("#sOModel").value=S.omodel; drawEngine(S.engine);
+  $("#sKey").value=S.key; $("#sName").value=S.name; $("#sLevel").value=S.level; $("#sGoal").value=S.goal;
+  $("#sVi").checked=S.vi; $("#sAuto").checked=S.auto; $("#sRate").value=S.rate; $("#rateV").textContent=S.rate+"x";
+}
+function applyS(){ $("#lvlPill").textContent=S.level; $("#meName").textContent=S.name||"Bạn"; }
+const closeSide = () => { $("#side").classList.remove("open"); $("#scrim").classList.remove("show"); };
+
+/* ================= Events ================= */
+const ta = $("#t");
+function autoGrow(){ ta.style.height="auto"; ta.style.height=Math.min(ta.scrollHeight,160)+"px"; }
+ta.addEventListener("input", autoGrow);
+ta.addEventListener("keydown", e=>{ if(e.key==="Enter" && !e.shiftKey && !e.isComposing){ e.preventDefault(); send(ta.value); } });
+$("#send").onclick = ()=>send(ta.value);
+$("#chips").onclick = e=>{ if(e.target.tagName==="BUTTON") send(e.target.textContent); };
+$("#msgs").onclick = e=>{
+  const w = e.target.closest(".word"); if(w) return toggleWord(w);
+  if(e.target.closest("[data-call]")) return startCall();
+  const c = e.target.closest("[data-card]");
+  if(c){ const card = CARDS[c.dataset.card]; $("#mode").value = card.mode; cur.mode=card.mode; drawChips(); send(card.p); }
+};
+$("#mode").onchange = ()=>{ if(cur.messages.length) newChat($("#mode").value); else { cur.mode=$("#mode").value; drawChips(); } };
+$("#newChat").onclick = ()=>newChat();
+document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>show(b.dataset.view));
+$("#chatList").onclick = e=>{
+  const del = e.target.dataset.del;
+  if(del){ if(!confirm("Xoá cuộc trò chuyện này?")) return; chats = chats.filter(c=>c.id!==del); saveAll(); if(cur.id===del) newChat(); else drawList(); return; }
+  const ci = e.target.closest(".ci"); if(ci) openChat(ci.dataset.id);
+};
+$("#wl").onclick = e=>{
+  if(e.target.dataset.say) speak(e.target.dataset.say);
+  if(e.target.dataset.rm){ vocab = vocab.filter(v=>v.w!==e.target.dataset.rm); saveAll(); drawVocab(); }
+};
+$("#review").onclick = ()=>{
+  if(!vocab.length) return toast("Sổ từ đang trống");
+  const pick = [...vocab].sort(()=>Math.random()-.5).slice(0,8).map(v=>v.w).join(", ");
+  newChat("quiz"); send(`Hãy kiểm tra mình các từ đã lưu: ${pick}. Mỗi lượt hỏi một từ nhé.`);
+};
+$("#exportV").onclick = ()=>{
+  const csv = "word,ipa,meaning,added\n"+vocab.map(v=>[v.w,v.ipa,v.m,v.added].map(x=>`"${(x||"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿"+csv],{type:"text/csv"})); a.download="emma-vocab.csv"; a.click();
+};
+$("#sRate").oninput = e=> $("#rateV").textContent = e.target.value+"x";
+$("#sEngine").onchange = e => drawEngine(e.target.value);
+$("#sLoad").onclick = () => { S.wmodel = $("#sWModel").value; loadWebLLM().catch(()=>{}); };
+$("#saveS").onclick = ()=>{
+  S = { engine:$("#sEngine").value, wmodel:$("#sWModel").value, omodel:$("#sOModel").value.trim() || "qwen2.5:1.5b",
+        key:$("#sKey").value.trim(), name:$("#sName").value.trim(), level:$("#sLevel").value, goal:$("#sGoal").value.trim(),
+        vi:$("#sVi").checked, auto:$("#sAuto").checked, rate:+$("#sRate").value };
+  store.set("settings", S); applyS(); drawEngine(); toast("Đã lưu cài đặt");
+  if(S.engine === "webllm") loadWebLLM().catch(()=>{}); show("chat"); if(!cur.messages.length) drawChat();
+};
+$("#wipe").onclick = ()=>{
+  if(!confirm("Xoá toàn bộ lịch sử, sổ từ, tiến độ và cài đặt? Không thể hoàn tác.")) return;
+  Object.keys(localStorage).filter(k=>k.startsWith("emma_")).forEach(k=>localStorage.removeItem(k)); location.reload();
+};
+$("#burger").onclick = ()=>{ $("#side").classList.add("open"); $("#scrim").classList.add("show"); };
+$("#scrim").onclick = closeSide;
+
+/* Mic */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if(!SR){ $("#mic").title="Trình duyệt chưa hỗ trợ nhận giọng nói (dùng Chrome hoặc Edge)"; $("#mic").style.opacity=.4; $("#mic").onclick=()=>toast("Hãy dùng Chrome hoặc Edge để nói"); }
+else{
+  const rec = new SR(); rec.lang="en-US"; rec.interimResults=true; rec.continuous=false;
+  let on=false;
+  rec.onresult = e=>{ ta.value=[...e.results].map(r=>r[0].transcript).join(""); autoGrow(); };
+  rec.onerror = e=>{ if(e.error==="not-allowed") toast("Hãy cho phép dùng micro"); };
+  rec.onend = ()=>{ on=false; $("#mic").classList.remove("on"); drawEngine(); if(ta.value.trim()) send(ta.value); };
+  $("#mic").onclick = ()=>{ if(on){ rec.stop(); return; } speechSynthesis?.cancel(); ta.value=""; try{ rec.start(); on=true; $("#mic").classList.add("on"); $("#status").textContent="Đang nghe bạn nói…"; }catch{} };
+}
+
+/* ================= Robot avatar ================= */
+// Robot vẽ bằng SVG, mỗi khung hình nội suy mắt / miệng / đầu về giá trị mục tiêu theo trạng thái
+const R = { state:"idle", running:false, say:null, sayT0:0, charMs:65, blinkAt:0, blinkEnd:0, glanceAt:0, glance:[0,0], happyUntil:0, level:0,
+            c:{ ex:0, ey:0, eh:30, ew:22, mw:30, mh:0, ms:6, tilt:0, happy:0 } };
+// Hình miệng (viseme): [rộng, độ mở, độ cong cười]
+const VIS = { rest:[30,0,6], A:[30,15,4], E:[38,8,4], I:[34,6,6], O:[20,13,0], U:[16,8,0], M:[28,0,2], F:[30,4,2], C:[28,6,3] };
+function visOf(ch){
+  ch = (ch||" ").toLowerCase();
+  if("aáàạảãăâ".includes(ch)) return VIS.A;
+  if("eéèêẹ".includes(ch)) return VIS.E;
+  if("iíìịy".includes(ch)) return VIS.I;
+  if("oóòôơọ".includes(ch)) return VIS.O;
+  if("uúùưụw".includes(ch)) return VIS.U;
+  if("mbp".includes(ch)) return VIS.M;
+  if("fv".includes(ch)) return VIS.F;
+  if(/[a-zđ]/.test(ch)) return VIS.C;
+  return VIS.M;
+}
+const HAPPY_RE = /\b(great|awesome|fantastic|wonderful|amazing|excellent|perfect|well done|nice|love|cool|congrat|yay|haha)/i;
+function robotSay(text, rate = 1){
+  R.say = text; R.sayT0 = performance.now(); R.charMs = 68 / (rate || 1); R.sayIdx = -1;
+  const box = $("#callEmma");
+  if(!text) return;
+  if(HAPPY_RE.test(text)) R.happyUntil = performance.now() + 2200;
+  // Phụ đề: tách thành từng từ để tô sáng từ đang nói
+  let pos = 0;
+  box.innerHTML = text.split(/(\s+)/).map(tok => {
+    const start = pos; pos += tok.length;
+    return /\S/.test(tok) ? `<span class="w" data-s="${start}" data-e="${pos}">${esc(tok)}</span>` : tok;
+  }).join("");
+}
+function robotBoundary(ci){
+  if(!R.say) return;
+  R.sayT0 = performance.now() - ci * R.charMs;   // đồng bộ lại khẩu hình theo vị trí trình duyệt báo
+}
+function markWord(ci){
+  if(ci === R.sayIdx) return; R.sayIdx = ci;
+  document.querySelectorAll("#callEmma .w").forEach(w => {
+    const s = +w.dataset.s, e = +w.dataset.e;
+    w.classList.toggle("on", ci >= s && ci < e);
+    w.classList.toggle("done", ci >= e);
+  });
+}
+function robotStart(){
+  if(R.running) return; R.running = true;
+  const now = performance.now(); R.blinkAt = now + 1500; R.glanceAt = now + 2500;
+  requestAnimationFrame(robotFrame);
+}
+const lerp = (a, b, k) => a + (b - a) * k;
+const $r = id => document.getElementById(id);
+function robotFrame(ts){
+  if(!call.on){ R.running = false; return; }
+  const c = R.c, st = R.state;
+  // ---- mục tiêu theo trạng thái ----
+  let tx = 0, ty = 0, eh = 30, ew = 22, tilt = 0, mouth = VIS.rest;
+  if(ts > R.glanceAt){ R.glance = [(Math.random()-.5)*12, (Math.random()-.5)*6]; R.glanceAt = ts + 2000 + Math.random()*3000; }
+  if(st === "idle" || st === "paused"){ [tx, ty] = R.glance; }
+  if(st === "listening"){ eh = 33 + R.level * 6; ew = 23; tilt = -5; tx = 0; ty = 1; }
+  if(st === "thinking"){ tx = 9; ty = -9; eh = 26; tilt = 4; }
+  if(st === "speaking"){ tx = R.glance[0] * .4; ty = 0; tilt = Math.sin(ts / 700) * 3; }
+  // khẩu hình khi nói: theo ký tự ước lượng đang phát âm
+  let ci = -1;
+  if(R.say){
+    ci = Math.floor((ts - R.sayT0) / R.charMs);
+    if(ci >= 0 && ci < R.say.length){ mouth = visOf(R.say[ci]); markWord(ci); }
+    else if(ci >= R.say.length) markWord(R.say.length);
+  } else if(st === "listening") mouth = [26, 0, 8];
+  else if(st === "thinking") mouth = [16, 0, 0];
+  // chớp mắt
+  if(ts > R.blinkAt){ R.blinkEnd = ts + 130; R.blinkAt = ts + 2200 + Math.random()*3500; }
+  if(ts < R.blinkEnd) eh = 3;
+  const happy = ts < R.happyUntil ? 1 : 0;
+  // ---- nội suy mượt ----
+  const k = .18, km = .45;
+  c.ex = lerp(c.ex, tx, k); c.ey = lerp(c.ey, ty, k); c.eh = lerp(c.eh, eh, ts < R.blinkEnd ? .6 : .25); c.ew = lerp(c.ew, ew, k);
+  c.tilt = lerp(c.tilt, tilt, .08); c.happy = lerp(c.happy, happy, .12);
+  const jitter = R.say ? 1 + Math.sin(ts / 45) * .12 : 1;
+  c.mw = lerp(c.mw, mouth[0], km); c.mh = lerp(c.mh, mouth[1] * jitter, km); c.ms = lerp(c.ms, mouth[2], km);
+  // ---- vẽ ----
+  const bob = Math.sin(ts / 900) * 4 + (st === "speaking" ? Math.sin(ts / 170) * 1.2 : 0);
+  $r("rHead").setAttribute("transform", `translate(0 ${bob.toFixed(2)}) rotate(${c.tilt.toFixed(2)} 150 200)`);
+  $r("rBody").setAttribute("transform", `translate(0 ${(bob * .35).toFixed(2)})`);
+  const eyes = [[118, $r("rEyeL")], [182, $r("rEyeR")]];
+  for(const [cx, el] of eyes){
+    el.setAttribute("x", (cx - c.ew/2 + c.ex).toFixed(2)); el.setAttribute("width", c.ew.toFixed(2));
+    el.setAttribute("y", (113 - c.eh/2 + c.ey).toFixed(2)); el.setAttribute("height", Math.max(c.eh, 2).toFixed(2));
+    el.setAttribute("rx", Math.min(11, c.eh/2).toFixed(2));
+  }
+  $r("rEyes").setAttribute("opacity", (1 - c.happy).toFixed(2));
+  $r("rHappy").setAttribute("opacity", c.happy.toFixed(2));
+  $r("rCheeks").setAttribute("opacity", (c.happy * .7 + (st === "speaking" ? .15 : 0)).toFixed(2));
+  const mx = 150, my = 152, w = c.mw / 2, h = c.mh, s = c.ms;
+  $r("rMouth").setAttribute("d", `M${mx-w},${my} Q${mx},${my+s-h} ${mx+w},${my} Q${mx},${my+s+h} ${mx-w},${my} Z`);
+  $r("rMouth").setAttribute("opacity", st === "thinking" && !R.say ? 0 : 1);
+  $r("rDots").setAttribute("opacity", st === "thinking" && !R.say ? 1 : 0);
+  if(st === "thinking") [...$r("rDots").children].forEach((d, i) => d.setAttribute("cy", (154 + Math.sin(ts/160 - i) * 3).toFixed(2)));
+  // màu đèn ăng-ten / tai / ngực
+  const col = { listening:"#34d399", thinking:"#fbbf24", speaking:"#f472b6", paused:"#6b7280" }[st] || "#a5b4fc";
+  const antOn = st === "thinking" ? (Math.sin(ts/120) > 0 ? 1 : .35) : 1;
+  $r("rAnt").setAttribute("fill", col); $r("rAnt").setAttribute("opacity", antOn);
+  $r("rChest").setAttribute("fill", col);
+  const ear = st === "listening" ? 1 + R.level * .35 : 1;
+  for(const [id, x] of [["rEarL", 45], ["rEarR", 255]]){
+    const el = $r(id); el.setAttribute("fill", col);
+    el.setAttribute("transform", `translate(${x} 127) scale(1 ${ear.toFixed(3)}) translate(${-x} -127)`);
+  }
+  // âm lượng micro (để robot "nghe" theo giọng bạn)
+  if(M.an){ M.an.getByteTimeDomainData(M.buf); let sum = 0; for(const v of M.buf){ const d = (v - 128) / 128; sum += d*d; }
+            R.level = lerp(R.level, Math.min(1, Math.sqrt(sum / M.buf.length) * 6), .3); }
+  else R.level = 0;
+  requestAnimationFrame(robotFrame);
+}
+
+// Đo âm lượng micro (chỉ để hoạt hình, không ghi âm hay gửi đi đâu)
+const M = { stream:null, ctx:null, an:null, buf:null };
+async function micMeterStart(){
+  if(M.stream || !navigator.mediaDevices?.getUserMedia) return;
+  try{
+    M.stream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:true, noiseSuppression:true } });
+    if(!call.on) return micMeterStop();
+    M.ctx = new AudioContext(); M.an = M.ctx.createAnalyser(); M.an.fftSize = 512;
+    M.ctx.createMediaStreamSource(M.stream).connect(M.an); M.buf = new Uint8Array(M.an.fftSize);
+  }catch{ M.stream = null; }
+}
+function micMeterStop(){
+  M.stream?.getTracks().forEach(t => t.stop()); M.ctx?.close().catch(()=>{});
+  Object.assign(M, { stream:null, ctx:null, an:null, buf:null });
+}
+
+/* ================= Live voice call ================= */
+const VI_RE = /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]/i;
+const call = { on:false, state:"idle", rec:null, q:[], spoken:0, done:false, skip:false, speaking:false, timer:null, clock:null, t0:0, rate:1, paused:false };
+
+function voiceFor(lang){
+  const vs = speechSynthesis.getVoices().filter(v => v.lang.toLowerCase().startsWith(lang));
+  if(lang==="vi") return vs.find(v=>/natural|online|hoaimy|an\b/i.test(v.name)) || vs[0] || null;
+  return vs.find(v=>/(aria|jenny|ava|emma|michelle).*(natural|online)/i.test(v.name))
+      || vs.find(v=>/natural|online/i.test(v.name) && /en-us/i.test(v.lang))
+      || vs.find(v=>/google us english|samantha|zira|aria|jenny/i.test(v.name))
+      || vs.find(v=>/en-us/i.test(v.lang)) || vs[0] || null;
+}
+function utter(s){
+  const text = plain(s).replace(/\/[^/\s][^/]*\//g,"").replace(/[^\p{L}\p{N}\s.,!?'’;:()\-"]/gu,"").trim();
+  if(!/[\p{L}\p{N}]/u.test(text)) return null;
+  const vi = VI_RE.test(text), v = voiceFor(vi ? "vi" : "en");
+  if(vi && !v) return null;                       // không có giọng tiếng Việt: chỉ hiện chữ
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = vi ? "vi-VN" : "en-US"; u.voice = v; u.rate = vi ? 1 : S.rate * call.rate;
+  return u;
+}
+function setCall(state, label){ call.state = state; R.state = state; $("#callOv").dataset.state = state; $("#callStatus").textContent = label; }
+
+function startCall(){
+  if(!SR) return toast("Gọi thoại cần Chrome hoặc Edge trên máy tính / Android");
+  if(!engineReady()) return;
+  show("chat");
+  if(S.engine === "webllm") loadWebLLM().catch(()=>{});   // tải model song song lúc Emma chào
+  Object.assign(call, { on:true, paused:false, q:[], speaking:false, skip:false, t0:Date.now() });
+  $("#callOv").classList.add("show"); $("#callUser").textContent = ""; $("#callEmma").textContent = "";
+  robotStart(); micMeterStart();
+  $("#callMuteL").textContent = "Tắt mic";
+  clearInterval(call.clock);
+  call.clock = setInterval(()=>{ const s = Math.floor((Date.now()-call.t0)/1000); $("#callTime").textContent = String(s/60|0).padStart(2,"0")+":"+String(s%60).padStart(2,"0"); }, 1000);
+  speechSynthesis.cancel();
+  const greet = cur.messages.length ? "Hi again! Let's keep talking. What's on your mind?" : "Hi! It's Emma. How are you today?";
+  $("#callEmma").textContent = greet;
+  setCall("thinking", "Đang kết nối…");
+  call.q = [greet]; call.done = true; pump();
+}
+function endCall(){
+  call.on = false; clearTimeout(call.timer); clearInterval(call.clock);
+  micMeterStop(); robotSay(null);
+  const r = call.rec; call.rec = null; try{ r?.abort(); }catch{}
+  call.u = null; speechSynthesis.cancel(); call.q = []; call.speaking = false;
+  $("#callOv").classList.remove("show"); setCall("idle", "");
+}
+
+function listen(){
+  if(!call.on) return;
+  if(call.paused) return setCall("paused", "Mic đang tắt, bấm 🔇 để nói tiếp");
+  setCall("listening", "Đang nghe… cứ nói tiếng Anh nhé");
+  $("#callUser").textContent = "";
+  const rec = new SR(); rec.lang = "en-US"; rec.continuous = true; rec.interimResults = true;
+  call.rec = rec;
+  rec.onresult = e => {
+    let said = ""; for(const r of e.results) said += r[0].transcript;
+    $("#callUser").textContent = said.trim();
+    clearTimeout(call.timer);
+    if(said.trim()) call.timer = setTimeout(finishTurn, 1300);   // im lặng ~1,3 giây → gửi
+  };
+  rec.onerror = e => {
+    if(e.error==="not-allowed" || e.error==="service-not-allowed"){ toast("Hãy cho phép trình duyệt dùng micro"); endCall(); }
+  };
+  rec.onend = () => {
+    if(!call.on || call.rec !== rec || call.state !== "listening") return;
+    $("#callUser").textContent.trim() ? finishTurn() : listen();   // trình duyệt tự ngắt → nghe lại
+  };
+  try{ rec.start(); }catch{ setTimeout(listen, 300); }
+}
+function finishTurn(){
+  clearTimeout(call.timer);
+  const said = $("#callUser").textContent.trim();
+  if(!said || call.state !== "listening") return;
+  const r = call.rec; call.rec = null; try{ r?.stop(); }catch{}
+  talk(said);
+}
+async function talk(said){
+  setCall("thinking", "Emma đang nghĩ…");
+  Object.assign(call, { q:[], spoken:0, done:false, skip:false });
+  $("#callEmma").textContent = "";
+  const full = await send(said, { voice:true, onDelta: f => { if(!call.speaking) $("#callEmma").textContent = plain(f); queue(f, false); } });
+  if(!call.on) return;
+  if(full == null){ setCall("thinking", "Có lỗi kết nối, thử lại nhé…"); setTimeout(()=>{ if(call.on){ call.done=true; call.q=[]; listen(); } }, 1800); return; }
+  queue(full, true); call.done = true; pump();
+}
+// Cắt các câu đã hoàn chỉnh trong luồng trả lời để Emma nói ngay, không chờ hết
+function queue(full, final){
+  if(call.skip) return;
+  const rest = full.slice(call.spoken);
+  let end = final ? rest.length : 0;
+  if(!final){ const re = /[.!?…](?=\s)|\n/g; let m; while((m = re.exec(rest))) end = m.index + 1; }
+  if(!end) return;
+  call.spoken += end;
+  rest.slice(0, end).split(/(?<=[.!?…])\s+|\n+/).map(s=>s.trim()).filter(Boolean).forEach(s => call.q.push(s));
+  pump();
+}
+function pump(){
+  if(call.speaking || !call.on) return;
+  const s = call.q.shift();
+  if(s === undefined){ if(call.done && call.state !== "listening"){ call.done = false; listen(); } return; }
+  const u = utter(s);
+  if(!u) return pump();
+  call.speaking = true; setCall("speaking", "Emma đang nói… (chạm để ngắt lời)");
+  call.u = u;   // giữ tham chiếu, tránh lỗi Chrome không gọi onend
+  u.onstart = () => robotSay(u.text, u.rate);
+  u.onboundary = e => robotBoundary(e.charIndex);
+  u.onend = u.onerror = () => { if(call.u !== u) return; call.speaking = false; robotSay(null); pump(); };
+  speechSynthesis.speak(u);
+}
+
+$("#callBtn").onclick = startCall;
+$("#callEnd").onclick = endCall;
+$("#orb").onclick = () => {
+  if(call.state === "listening") return finishTurn();           // gửi ngay, khỏi chờ
+  if(call.state === "speaking"){                                 // ngắt lời Emma
+    call.skip = true; call.q = []; call.u = null; speechSynthesis.cancel(); call.speaking = false;
+    if(call.done){ call.done = false; listen(); } else setCall("thinking", "Đợi Emma xong câu…");
+  }
+};
+$("#callMute").onclick = () => {
+  call.paused = !call.paused;
+  $("#callMuteL").textContent = call.paused ? "Bật mic" : "Tắt mic";
+  $("#callMute").textContent = call.paused ? "🔇" : "🎙️";
+  if(call.paused){ clearTimeout(call.timer); const r = call.rec; call.rec = null; try{ r?.abort(); }catch{} if(call.state==="listening") setCall("paused", "Mic đang tắt, bấm 🔇 để nói tiếp"); }
+  else if(call.state === "paused" || call.state === "listening") listen();
+};
+$("#callSlow").onclick = () => {
+  call.rate = call.rate === 1 ? 0.8 : 1;
+  $("#callSlowL").textContent = call.rate === 1 ? "Bình thường" : "Chậm";
+};
+document.addEventListener("keydown", e => { if(e.key === "Escape" && call.on) endCall(); });
+speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+
+/* ================= Boot ================= */
+speechSynthesis?.getVoices();
+applyS(); drawVocab();
+newChat("chat");
+drawEngine();
+if(S.engine === "claude" && !S.key) setTimeout(()=>{ show("settings"); toast("Nhập API key để bắt đầu"); }, 300);
+</script>
+</body>
+</html>
