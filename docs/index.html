@@ -149,6 +149,47 @@ main{flex:1;display:flex;flex-direction:column;min-width:0}
 .field[data-eng].on{display:block}
 code{background:var(--bg);padding:1px 5px;border-radius:4px}
 
+/* ---------- Lộ trình & bài học ---------- */
+.lessonbar{display:flex;align-items:center;gap:8px;max-width:820px;margin:0 auto;padding:12px 16px 0;font-size:14px;flex-wrap:wrap;position:sticky;top:0;z-index:2;background:var(--bg)}
+.lessonbar[hidden]{display:none}
+.lessonbar .lt{flex:1;min-width:0;background:var(--brand-soft);color:var(--brand);border-radius:10px;padding:7px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lessonbar button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 10px;font-size:13px}
+.lessonbar button:hover{border-color:var(--brand);color:var(--brand)}
+.lessonbar .isdone{color:var(--ok);font-weight:600;white-space:nowrap}
+.nextup{display:flex;flex-direction:column;gap:3px;width:100%;text-align:left;background:linear-gradient(135deg,#eef2ff,#fdf2f8);border:1px solid #c7d2fe;border-radius:var(--r);padding:14px 16px;margin:0 0 16px}
+.nextup:hover{border-color:var(--brand)}
+.nextup small{color:var(--brand);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:11px}
+.nextup b{font-size:16px}
+.nextup span{color:var(--muted);font-size:13px}
+.track{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.track summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px}
+.track summary::-webkit-details-marker{display:none}
+.track[open] summary{border-bottom:1px solid var(--line)}
+.track .ti{font-size:26px}
+.track .tt{flex:1;min-width:0}
+.track .tt b{display:block}
+.track .tt small{color:var(--muted)}
+.track .lv{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--muted);white-space:nowrap}
+.track .pg{width:84px;text-align:right;font-size:12px;color:var(--muted);flex-shrink:0}
+.track .pg i{display:block;height:6px;background:#e5e7eb;border-radius:3px;margin-top:4px;overflow:hidden}
+.track .pg i b{display:block;height:100%;background:var(--ok)}
+.track ol{list-style:none;margin:0;padding:6px 8px 8px}
+.track li{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;cursor:pointer}
+.track li:hover{background:var(--bg)}
+.track li .num{width:28px;height:28px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-size:13px;color:var(--muted);flex-shrink:0}
+.track li.done .num{background:#d1fae5;color:var(--ok)}
+.track li.next .num{background:var(--brand);color:#fff}
+.track li div{flex:1;min-width:0}
+.track li small{display:block;color:var(--muted);font-size:13px}
+.track li .go{color:var(--brand);font-size:13px;white-space:nowrap}
+.lcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;text-align:left;margin:0 0 16px;display:flex;flex-direction:column;gap:8px}
+.lcard ul{margin:0;padding-left:20px}
+.lcard p{margin:0;color:var(--ink)}
+.wchips{display:flex;flex-wrap:wrap;gap:6px}
+.wchips span{background:var(--brand-soft);color:var(--brand);border-radius:8px;padding:2px 8px;font-size:13px}
+.lbtns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.lbtns .callbig{margin:0}
+
 /* ---------- Live call ---------- */
 .callbtn{background:linear-gradient(135deg,#10b981,#059669)!important;color:#fff;border:none!important;font-weight:600}
 .callbig{margin:0 0 22px;padding:12px 22px;font-size:16px;border-radius:999px;background:linear-gradient(135deg,#10b981,#059669)}
@@ -218,6 +259,7 @@ code{background:var(--bg);padding:1px 5px;border-radius:4px}
   <button class="newchat" id="newChat">＋ Cuộc trò chuyện mới</button>
   <nav>
     <button data-view="chat" class="active">💬 Trò chuyện</button>
+    <button data-view="path">🗺️ Lộ trình học <span class="count" id="pathCount">0</span></button>
     <button data-view="vocab">📒 Sổ từ vựng <span class="count" id="vocabCount">0</span></button>
     <button data-view="progress">📈 Tiến độ</button>
     <button data-view="settings">⚙️ Cài đặt</button>
@@ -241,6 +283,7 @@ code{background:var(--bg);padding:1px 5px;border-radius:4px}
       <option value="vocab">📚 Từ vựng</option>
       <option value="quiz">🧩 Kiểm tra</option>
       <option value="ielts">🏆 IELTS</option>
+      <option value="lesson" hidden>📘 Bài học</option>
     </select>
     <span class="pill lvl" id="lvlPill">B1</span>
   </div>
@@ -249,7 +292,18 @@ code{background:var(--bg);padding:1px 5px;border-radius:4px}
 
   <!-- CHAT -->
   <section class="view show" id="v-chat">
+    <div class="lessonbar" id="lessonBar" hidden></div>
     <div id="msgs"></div>
+  </section>
+
+  <!-- PATH -->
+  <section class="view" id="v-path">
+    <div class="page">
+      <h2>🗺️ Lộ trình học</h2>
+      <p id="pathIntro">Chọn một bài, Emma sẽ dạy từng bước, chấm bài luyện và đánh dấu khi bạn hoàn thành.</p>
+      <div id="nextUp"></div>
+      <div id="tracks"></div>
+    </div>
   </section>
 
   <!-- VOCAB -->
@@ -383,6 +437,7 @@ code{background:var(--bg);padding:1px 5px;border-radius:4px}
 
 <div class="toast" id="toast"></div>
 
+<script src="curriculum.js"></script>
 <script>
 /* ================= State ================= */
 const MODEL = "claude-opus-5-5";
@@ -395,6 +450,50 @@ let S = Object.assign({ engine:"webllm", wmodel:"Qwen2.5-1.5B-Instruct", omodel:
 let chats = store.get("chats", []);          // [{id,title,mode,messages:[{role,content}],updated}]
 let vocab = store.get("vocab", []);          // [{w,ipa,m,ex,added}]
 let stats = store.get("stats", { msgs:0, fixes:0, days:{} });
+let done = store.get("done", {});            // {lessonId: "yyyy-mm-dd"}
+
+/* ================= Giáo trình ================= */
+const LESSONS = {}, LESSON_LIST = [];
+(window.CURRICULUM || []).forEach(t => t.lessons.forEach(([id, title, goal, points, words, task]) => {
+  const L = { id, title, goal, points, words, task, track:t };
+  LESSONS[id] = L; LESSON_LIST.push(L);
+}));
+const CEFR = ["A1","A2","B1","B2","C1"];
+function nextLesson(){
+  if(LESSONS.placement && !done.placement) return LESSONS.placement;
+  // ưu tiên lộ trình đúng trình độ hiện tại, rồi các trình độ cao hơn, rồi mọi bài còn lại
+  const order = CEFR.slice(CEFR.indexOf(S.level) < 0 ? 0 : CEFR.indexOf(S.level)).map(l => l.toLowerCase());
+  for(const tid of order){ const t = CURRICULUM.find(x => x.id === tid); const l = t?.lessons.find(l => !done[l[0]]); if(l) return LESSONS[l[0]]; }
+  return LESSON_LIST.find(l => !done[l.id]) || null;
+}
+// Nội dung bài đưa vào lời dặn cho Claude (tiếng Việt, chi tiết)
+function lessonBlockVI(L){
+  if(!L) return "";
+  const pl = L.id === "placement";
+  return `
+BÀI HỌC ĐANG DẠY (ưu tiên hơn mọi chế độ khác)
+- Lộ trình: ${L.track.title} (${L.track.level}) › Bài: ${L.title}
+- Mục tiêu: ${L.goal}
+- Kiến thức trọng tâm:\n${L.points.map(p => "  • " + p).join("\n")}
+${L.words.length ? "- Từ vựng / mẫu câu cần dạy: " + L.words.join(", ") + "\n" : ""}- Bài luyện cuối: ${L.task}
+${pl ? `CÁCH LÀM: Đây là bài kiểm tra, không dạy. Hỏi lần lượt từng câu (mỗi lượt MỘT câu), từ dễ tới khó, khoảng 8–10 câu. Khi đủ thông tin: nêu trình độ ước lượng, 2 điểm mạnh, 2 điểm cần cải thiện, gợi ý lộ trình, rồi viết chính xác mã [[LEVEL:X]] (X là A1, A2, B1, B2 hoặc C1) và [[DONE]] ở cuối tin nhắn.`
+: `CÁCH DẠY: từng bước nhỏ, mỗi lượt một bước, luôn chờ học viên trả lời rồi mới sang bước tiếp:
+  1) Khởi động bằng một câu hỏi gần gũi với chủ đề.
+  2) Lần lượt dạy từng điểm trọng tâm: giải thích ngắn gọn${S.vi ? " (tiếng Việt)" : ""} + 2 ví dụ, rồi cho học viên tự đặt 1 câu và sửa.
+  3) Lồng từ vựng / mẫu câu vào bài bằng cú pháp {{word|/IPA/|nghĩa}}, 2–3 từ mỗi lượt.
+  4) Giao bài luyện cuối, sửa lỗi kỹ.
+  5) Khi học viên hoàn thành bài luyện cuối ở mức chấp nhận được: tóm tắt 3 ý chính, khen ngợi, rồi viết chính xác mã [[DONE]] ở cuối tin nhắn. Tuyệt đối không viết [[DONE]] trước đó.
+  Nếu học viên nói chuyện ngoài lề, trả lời ngắn rồi khéo léo quay lại bài.`}`;
+}
+// Bản ngắn gọn bằng tiếng Anh cho model nhỏ chạy local
+function lessonBlockEN(L){
+  if(!L) return "";
+  if(L.id === "placement") return `Today: a placement test. Ask ONE question per message, from easy to hard, about 8 questions. Do not teach. At the end give the learner's CEFR level and write [[LEVEL:X]] (X = A1, A2, B1, B2 or C1) and [[DONE]].`;
+  return `Today's lesson: "${L.title}" (level ${L.track.level}). Goal: ${L.goal}.
+Key points: ${L.points.join("; ")}.
+${L.words.length ? "Useful words: " + L.words.join(", ") + ".\n" : ""}Final task: ${L.task}.
+Teach step by step, ONE small step per message, and wait for the learner each time: warm-up question, then explain one key point with 2 examples and let the learner try, then the next point, then the final task. When the learner finishes the final task, summarise and write [[DONE]].`;
+}
 let cur = null, busy = false;
 
 const MODES = {
@@ -403,7 +502,8 @@ const MODES = {
   grammar: "NGỮ PHÁP: Chọn một điểm ngữ pháp phù hợp, giải thích ngắn kèm 2 ví dụ, rồi cho MỘT bài tập mỗi lượt, chờ học viên trả lời rồi chấm và cho bài tiếp theo khó dần.",
   vocab:   "TỪ VỰNG: Dạy 5 từ/cụm theo chủ đề, mỗi từ có phiên âm, nghĩa, ví dụ. Sau đó yêu cầu học viên đặt câu với từng từ và sửa cho họ.",
   quiz:    "KIỂM TRA: Ra MỘT câu hỏi mỗi lượt (trắc nghiệm A/B/C/D hoặc điền từ), chấm, giải thích ngắn, ghi điểm dạng 'Score: x/y', tăng độ khó dần.",
-  ielts:   "IELTS SPEAKING: Đóng vai giám khảo IELTS, hỏi theo Part 1/2/3. Sau mỗi câu trả lời nhận xét ngắn theo Fluency, Vocabulary, Grammar và ước lượng band, gợi ý một câu trả lời mẫu tốt hơn."
+  ielts:   "IELTS SPEAKING: Đóng vai giám khảo IELTS, hỏi theo Part 1/2/3. Sau mỗi câu trả lời nhận xét ngắn theo Fluency, Vocabulary, Grammar và ước lượng band, gợi ý một câu trả lời mẫu tốt hơn.",
+  lesson:  "BÀI HỌC: Dạy theo đúng bài học bên dưới."
 };
 const CARDS = [
   { mode:"chat", icon:"☕", t:"Tán gẫu", d:"Nói chuyện thoải mái về ngày của bạn", p:"Hi Emma! Let's have a chat." },
@@ -419,7 +519,8 @@ const CHIPS = {
   grammar:["Present perfect","Câu điều kiện","a / an / the","Câu bị động"],
   vocab:["Work & office","Food","Emotions","Phrasal verbs"],
   quiz:["Start the quiz","Harder please","Vocabulary quiz","Grammar quiz"],
-  ielts:["Part 1","Part 2 – cue card","Part 3","Give me feedback"]
+  ielts:["Part 1","Part 2 – cue card","Part 3","Give me feedback"],
+  lesson:["Giải thích lại giúp mình","Cho mình thêm ví dụ","Cho mình bài tập","Mình sẵn sàng làm bài luyện cuối"]
 };
 
 const VOICE_RULES = () => `
@@ -443,6 +544,7 @@ THÔNG TIN HỌC VIÊN
 - Từ đã lưu gần đây (hãy thỉnh thoảng dùng lại để ôn): ${recent || "chưa có"}
 
 CHẾ ĐỘ: ${MODES[mode]}
+${lessonBlockVI(LESSONS[cur?.lesson])}
 
 CÁCH TRẢ LỜI
 - Nói chủ yếu bằng tiếng Anh ở mức ${S.level}${S.level<"B1" ? " (câu ngắn, từ đơn giản)" : ""}. ${S.vi ? "Giải thích, nghĩa từ, mẹo học viết bằng tiếng Việt." : "Chỉ dùng tiếng Việt khi học viên thật sự bối rối."}
@@ -461,12 +563,14 @@ const MODES_EN = {
   grammar:"Grammar practice: explain one grammar point briefly with 2 examples, then give ONE exercise at a time and check the answer.",
   vocab:"Vocabulary: teach useful words on a topic, one or two at a time, then ask the learner to make a sentence with them.",
   quiz:"Quiz: ask ONE multiple-choice or fill-in-the-blank question at a time, check the answer, keep score.",
-  ielts:"IELTS Speaking examiner: ask Part 1/2/3 questions, give a short band estimate and one tip after each answer."
+  ielts:"IELTS Speaking examiner: ask Part 1/2/3 questions, give a short band estimate and one tip after each answer.",
+  lesson:"Teach the lesson below."
 };
 function localPrompt(mode, voice){
   return `You are Emma, a warm and friendly English tutor and chat buddy for a Vietnamese learner.
 Learner: name ${S.name || "unknown"}, English level ${S.level} (CEFR)${S.goal ? ", goal: " + S.goal : ""}.
 Task: ${MODES_EN[mode]}
+${lessonBlockEN(LESSONS[cur?.lesson])}
 Rules:
 - Speak simple, natural English for level ${S.level}. Keep every reply short: ${voice ? "1-2 sentences" : "2-4 sentences"}.
 - If the learner makes an English mistake, reply to the meaning first, then ${voice ? "say a quick tip like: Small tip, we say \"I went\", not \"I go\"." : "add one line starting with ✏️ showing the corrected sentence in **bold** and a very short reason" + (S.vi ? " in Vietnamese." : ".")}
@@ -590,7 +694,7 @@ async function streamLLM(mode, voice, messages, onDelta){
 /* ================= Helpers ================= */
 const esc = s => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function render(text){
-  let h = esc(text.replace(/✏️(?![^\n]*\*\*)\s*/g, ""));   // bỏ ✏️ trống mà model nhỏ hay chèn
+  let h = esc(text.replace(MARK_RE, "").replace(/✏️(?![^\n]*\*\*)\s*/g, "").trimEnd());   // ẩn mã [[DONE]] và ✏️ trống
   h = h.replace(/\{\{([^|{}]+)\|([^|{}]*)\|([^|{}]+)\}\}/g, (_,w,ipa,m) => {
     const saved = vocab.some(v=>v.w.toLowerCase()===w.trim().toLowerCase());
     return `<span class="word${saved?" saved":""}" data-w="${w.trim()}" data-ipa="${ipa.trim()}" data-m="${m.trim()}" title="Bấm để lưu">${w.trim()} <small>${ipa.trim()}</small> ${saved?"✓":"＋"}</span>`;
@@ -599,10 +703,11 @@ function render(text){
   h = h.replace(/^(✏️.*)$\n?/gm, '<span class="fix">$1</span>');
   return h;
 }
-const plain = t => t.replace(/\{\{([^|]+)\|[^|]*\|[^}]+\}\}/g,"$1").replace(/\*\*/g,"");
+const MARK_RE = /\[\[(?:DONE|LEVEL:[^\]]*)\]\]/gi;
+const plain = t => t.replace(MARK_RE,"").replace(/\{\{([^|]+)\|[^|]*\|[^}]+\}\}/g,"$1").replace(/\*\*/g,"");
 function toast(m){ const t=$("#toast"); t.textContent=m; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),1800); }
 const today = () => new Date().toISOString().slice(0,10);
-function saveAll(){ store.set("chats",chats); store.set("vocab",vocab); store.set("stats",stats); }
+function saveAll(){ store.set("chats",chats); store.set("vocab",vocab); store.set("stats",stats); store.set("done",done); }
 
 /* ================= Speech ================= */
 function speak(text, rate=S.rate){
@@ -619,10 +724,59 @@ function speak(text, rate=S.rate){
 }
 
 /* ================= Chat ================= */
-function newChat(mode = $("#mode").value){
-  cur = { id: Date.now().toString(36), title:"Cuộc trò chuyện mới", mode, messages:[], updated:Date.now() };
+function newChat(mode = $("#mode").value, lesson = null){
+  if(mode === "lesson" && !lesson) mode = "chat";
+  cur = { id: Date.now().toString(36), title: lesson ? "📘 " + LESSONS[lesson].title : "Cuộc trò chuyện mới", mode, lesson, messages:[], updated:Date.now() };
   $("#mode").value = mode;
   drawChat(); drawList(); show("chat");
+}
+const startLesson = id => { if(LESSONS[id]) newChat("lesson", id); };
+function drawLessonBar(){
+  const L = LESSONS[cur?.lesson], bar = $("#lessonBar");
+  if(!L){ bar.hidden = true; return; }
+  bar.hidden = false;
+  const nx = nextAfter(L.id);
+  bar.innerHTML = `<span class="lt" title="${esc(L.track.title)} › ${esc(L.title)}">${L.track.icon} ${esc(L.track.title)} › <b>${esc(L.title)}</b></span>`
+    + (done[L.id] ? `<span class="isdone">✓ Đã hoàn thành</span>` : `<button data-done>✓ Đánh dấu đã học</button>`)
+    + (nx ? `<button data-lesson="${nx.id}" title="${esc(nx.title)}">Bài tiếp →</button>` : "");
+}
+function nextAfter(id){
+  const L = LESSONS[id]; if(!L) return null;
+  const ls = L.track.lessons, i = ls.findIndex(l => l[0] === id);
+  if(ls[i+1]) return LESSONS[ls[i+1][0]];
+  const ti = CURRICULUM.indexOf(L.track), nt = CURRICULUM[ti+1];
+  return nt ? LESSONS[nt.lessons[0][0]] : null;
+}
+function completeLesson(id){
+  const L = LESSONS[id]; if(!L) return;
+  if(!done[id]){ done[id] = today(); saveAll(); toast("🎉 Hoàn thành bài: " + L.title); if(typeof R !== "undefined") R.happyUntil = performance.now() + 3000; }
+  drawLessonBar(); drawPathCount();
+}
+// Đọc các mã AI gửi kèm: [[DONE]] = xong bài, [[LEVEL:B1]] = kết quả kiểm tra trình độ
+function checkMarkers(full){
+  const lv = full.match(/\[\[LEVEL:\s*(A1|A2|B1|B2|C1)\s*\]\]/i);
+  if(lv){ S.level = lv[1].toUpperCase(); store.set("settings", S); applyS(); toast("Đã đặt trình độ của bạn: " + S.level); }
+  if(cur.lesson && /\[\[DONE\]\]/i.test(full)) completeLesson(cur.lesson);
+}
+function drawPathCount(){
+  $("#pathCount").textContent = `${LESSON_LIST.filter(l => done[l.id]).length}/${LESSON_LIST.length}`;
+}
+function nextCard(){
+  const nx = nextLesson();
+  return nx ? `<button class="nextup" data-lesson="${nx.id}"><small>${nx.id === "placement" ? "Bắt đầu từ đây" : "Bài nên học tiếp"}</small><b>${nx.track.icon} ${esc(nx.title)}</b><span>${esc(nx.track.title)} · ${esc(nx.goal)}</span></button>` : "";
+}
+function drawPath(){
+  drawPathCount();
+  const total = LESSON_LIST.length, n = LESSON_LIST.filter(l => done[l.id]).length;
+  $("#pathIntro").textContent = `${CURRICULUM.length} lộ trình, ${total} bài từ A1 đến C1, phát âm, giao tiếp, công sở và IELTS. Bạn đã xong ${n} bài. Chọn một bài, Emma sẽ dạy từng bước, chấm bài luyện và đánh dấu khi bạn hoàn thành.`;
+  const nx = nextLesson();
+  $("#nextUp").innerHTML = nx ? nextCard() : `<div class="empty">🎉 Bạn đã hoàn thành toàn bộ giáo trình!</div>`;
+  $("#tracks").innerHTML = CURRICULUM.map(t => {
+    const k = t.lessons.filter(l => done[l[0]]).length, pct = Math.round(k / t.lessons.length * 100);
+    const open = nx && nx.track === t ? " open" : "";
+    return `<details class="track"${open}><summary><span class="ti">${t.icon}</span><span class="tt"><b>${esc(t.title)}</b><small>${esc(t.desc)}</small></span><span class="lv">${t.level}</span><span class="pg">${k}/${t.lessons.length}<i><b style="width:${pct}%"></b></i></span></summary>
+      <ol>${t.lessons.map((l, i) => `<li class="${done[l[0]] ? "done" : ""}${nx && nx.id === l[0] ? " next" : ""}" data-lesson="${l[0]}"><span class="num">${done[l[0]] ? "✓" : i + 1}</span><div><b>${esc(l[1])}</b><small>${esc(l[2])}</small></div><span class="go">${done[l[0]] ? "Ôn lại" : "Học"} →</span></li>`).join("")}</ol></details>`;
+  }).join("");
 }
 function openChat(id){
   cur = chats.find(c=>c.id===id); if(!cur) return;
@@ -630,11 +784,21 @@ function openChat(id){
 }
 function drawChat(){
   const box = $("#msgs"); box.innerHTML="";
-  if(!cur.messages.length){
+  drawLessonBar();
+  const L = LESSONS[cur.lesson];
+  if(!cur.messages.length && L){
+    box.innerHTML = `<div class="welcome"><div class="big">${L.track.icon}</div><h2>${esc(L.title)}</h2>
+      <p>${esc(L.track.title)} · ${esc(L.goal)}</p>
+      <div class="lcard"><b>${L.id === "placement" ? "Emma sẽ kiểm tra" : "Bạn sẽ học"}</b><ul>${L.points.map(p => `<li>${esc(p)}</li>`).join("")}</ul>
+        ${L.words.length ? `<b>Từ vựng / mẫu câu</b><div class="wchips">${L.words.map(w => `<span>${esc(w)}</span>`).join("")}</div>` : ""}
+        <b>${L.id === "placement" ? "Kết quả" : "Bài luyện cuối"}</b><p>${esc(L.task)}</p></div>
+      <div class="lbtns"><button class="btn" data-begin>▶️ Bắt đầu (nhắn tin)</button><button class="btn callbig" data-call>📞 Học bằng giọng nói</button></div></div>`;
+  } else if(!cur.messages.length){
     const hi = S.name ? `Chào ${esc(S.name)}! 👋` : "Chào bạn! 👋";
     box.innerHTML = `<div class="welcome"><div class="big">👩‍🏫</div><h2>${hi} Mình là Emma.</h2>
       <p>Trợ lý tiếng Anh của bạn. Nói chuyện với mình bằng tiếng Anh, sai cũng không sao, mình sẽ sửa giúp.</p>
       <button class="btn callbig" data-call>📞 Gọi thoại với Emma</button>
+      ${nextCard()}
       <div class="cards">${CARDS.map((c,i)=>`<button data-card="${i}"><span style="font-size:22px">${c.icon}</span><b>${c.t}</b><small>${c.d}</small></button>`).join("")}</div></div>`;
   } else cur.messages.forEach(m => addMsg(m.role==="user"?"me":"bot", m.content));
   drawChips();
@@ -698,6 +862,7 @@ async function send(text, opts = {}){
     if(/✏️/.test(full)) stats.fixes++;
     addActs(row, full);
     saveAll(); drawList();
+    checkMarkers(full);
     if(S.auto && !opts.voice) speak(full);
     return full;
   }catch(e){
@@ -735,7 +900,7 @@ function drawProgress(){
   let streak=0; const d=new Date();
   if(!stats.days[today()]) d.setDate(d.getDate()-1);
   while(stats.days[d.toISOString().slice(0,10)]){ streak++; d.setDate(d.getDate()-1); }
-  const items = [["🔥",streak,"ngày liên tiếp"],["💬",stats.msgs,"tin nhắn đã gửi"],["📒",vocab.length,"từ đã lưu"],["✏️",stats.fixes,"lần được sửa lỗi"],["🗂️",chats.length,"cuộc trò chuyện"]];
+  const items = [["🔥",streak,"ngày liên tiếp"],["📘",`${LESSON_LIST.filter(l=>done[l.id]).length}/${LESSON_LIST.length}`,"bài đã học · trình độ " + S.level],["💬",stats.msgs,"tin nhắn đã gửi"],["📒",vocab.length,"từ đã lưu"],["✏️",stats.fixes,"lần được sửa lỗi"],["🗂️",chats.length,"cuộc trò chuyện"]];
   $("#stats").innerHTML = items.map(([i,n,l])=>`<div class="stat">${i}<div class="n">${n}</div><small>${l}</small></div>`).join("");
   const names=["CN","T2","T3","T4","T5","T6","T7"]; let h="";
   for(let k=6;k>=0;k--){ const x=new Date(); x.setDate(x.getDate()-k); const key=x.toISOString().slice(0,10);
@@ -750,6 +915,7 @@ function show(v){
   $("#composer").style.display = v==="chat" ? "" : "none";
   if(v==="vocab") drawVocab();
   if(v==="progress") drawProgress();
+  if(v==="path") drawPath();
   if(v==="settings") fillSettings();
   closeSide();
 }
@@ -774,7 +940,15 @@ $("#msgs").onclick = e=>{
   const c = e.target.closest("[data-card]");
   if(c){ const card = CARDS[c.dataset.card]; $("#mode").value = card.mode; cur.mode=card.mode; drawChips(); send(card.p); }
 };
-$("#mode").onchange = ()=>{ if(cur.messages.length) newChat($("#mode").value); else { cur.mode=$("#mode").value; drawChips(); } };
+$("#mode").onchange = ()=>{ if(cur.messages.length) newChat($("#mode").value); else { cur.mode=$("#mode").value; const hadLesson = cur.lesson; cur.lesson=null; if(hadLesson){ cur.title="Cuộc trò chuyện mới"; drawChat(); } else drawChips(); } };
+// Bài học: mở bài, đánh dấu xong, bắt đầu học
+document.addEventListener("click", e => {
+  const l = e.target.closest("[data-lesson]");
+  if(l){ startLesson(l.dataset.lesson); return; }
+  if(e.target.closest("[data-done]") && cur.lesson){ completeLesson(cur.lesson); return; }
+  if(e.target.closest("[data-begin]") && cur.lesson)
+    send(cur.lesson === "placement" ? "Mình sẵn sàng làm bài kiểm tra trình độ!" : "Bắt đầu bài học nhé!");
+});
 $("#newChat").onclick = ()=>newChat();
 document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>show(b.dataset.view));
 $("#chatList").onclick = e=>{
@@ -1091,7 +1265,7 @@ speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
 speechSynthesis?.getVoices();
 applyS(); drawVocab();
 newChat("chat");
-drawEngine();
+drawEngine(); drawPathCount();
 if(S.engine === "claude" && !S.key) setTimeout(()=>{ show("settings"); toast("Nhập API key để bắt đầu"); }, 300);
 </script>
 </body>
